@@ -3,7 +3,7 @@
 // Definitions (all in integer halalas):
 //   netAllocated  = allocations to the agent - cash returned by the agent
 //   consumed      = approved expenses (ledger EXPENSE rows) + signed ADJUSTMENT rows
-//   pending       = expenses SUBMITTED, awaiting the controller
+//   pending       = expenses SUBMITTED or CONTROLLER_APPROVED, awaiting final approval
 //   unresolved    = expenses REJECTED and not yet corrected (cash still held by the agent)
 //   cashOnHand    = netAllocated - consumed        (expected cash the agent should hold)
 //   available     = cashOnHand - pending           (what the agent can still spend)
@@ -12,7 +12,10 @@
 //   unallocatedPool = funded - allocated + returned
 
 export type LedgerType = "FUNDING" | "ALLOCATION" | "RETURN" | "EXPENSE" | "ADJUSTMENT";
-export type ExpenseStatus = "DRAFT" | "SUBMITTED" | "APPROVED" | "REJECTED";
+export type ExpenseStatus = "DRAFT" | "SUBMITTED" | "CONTROLLER_APPROVED" | "APPROVED" | "REJECTED";
+
+/** Statuses where the money is committed but not yet approved. */
+export const PENDING_STATUSES: ExpenseStatus[] = ["SUBMITTED", "CONTROLLER_APPROVED"];
 
 export interface LedgerRow {
   type: LedgerType;
@@ -69,10 +72,11 @@ function sum(rows: LedgerRow[], type: LedgerType, agentId?: string): number {
   return total;
 }
 
-function sumExpenses(expenses: ExpenseRow[], status: ExpenseStatus, agentId?: string): number {
+function sumExpenses(expenses: ExpenseRow[], status: ExpenseStatus | ExpenseStatus[], agentId?: string): number {
+  const wanted = Array.isArray(status) ? status : [status];
   let total = 0;
   for (const e of expenses) {
-    if (e.status !== status) continue;
+    if (!wanted.includes(e.status)) continue;
     if (agentId !== undefined && e.agentId !== agentId) continue;
     const t = e.total ?? 0;
     assertHalalas(t, "expense total");
@@ -95,7 +99,7 @@ export function agentBalance(
   const returned = sum(ledger, "RETURN", agentId);
   const netAllocated = allocated - returned;
   const consumed = sum(ledger, "EXPENSE", agentId) + sum(ledger, "ADJUSTMENT", agentId);
-  const pending = sumExpenses(expenses, "SUBMITTED", agentId);
+  const pending = sumExpenses(expenses, PENDING_STATUSES, agentId);
   const unresolved = sumExpenses(expenses, "REJECTED", agentId);
   const cashOnHand = netAllocated - consumed;
   const available = cashOnHand - pending;
@@ -126,7 +130,7 @@ export function managerSummary(ledger: LedgerRow[], expenses: ExpenseRow[]): Man
     returned,
     unallocatedPool: funded - allocated + returned,
     consumed,
-    pending: sumExpenses(expenses, "SUBMITTED"),
+    pending: sumExpenses(expenses, PENDING_STATUSES),
     unresolved: sumExpenses(expenses, "REJECTED"),
     percentConsumed: percent(consumed, funded),
     percentAllocated: percent(allocated - returned, funded),

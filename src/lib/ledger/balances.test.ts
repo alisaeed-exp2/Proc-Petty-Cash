@@ -141,3 +141,16 @@ test("normalizeDigits converts Arabic-Indic and Persian digits", () => {
   assert.equal(normalizeDigits("٠١٢٣٤٥٦٧٨٩"), "0123456789");
   assert.equal(normalizeDigits("۰۱۲۳۴۵۶۷۸۹"), "0123456789");
 });
+
+test("expenses awaiting manager approval still count as pending", () => {
+  const b = agentBalance(
+    "a1",
+    [{ type: "ALLOCATION", agentId: "a1", amount: 100000 }],
+    [
+      { agentId: "a1", status: "SUBMITTED", total: 10000 },
+      { agentId: "a1", status: "CONTROLLER_APPROVED", total: 5000 },
+    ],
+  );
+  assert.equal(b.pending, 15000);
+  assert.equal(b.available, 85000);
+});

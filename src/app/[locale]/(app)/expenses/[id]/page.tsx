@@ -134,7 +134,7 @@ export default async function ExpensePage({
 
           <ReviewHistory
             locale={locale}
-            reviews={e.reviews.map((r) => ({ id: r.id, decision: r.decision, reason: r.reason, createdAt: r.createdAt, reviewerName: r.reviewer.name }))}
+            reviews={e.reviews.map((r) => ({ id: r.id, decision: r.decision, reason: r.reason, createdAt: r.createdAt, reviewerName: r.reviewer.name, stage: r.stage }))}
           />
         </div>
 

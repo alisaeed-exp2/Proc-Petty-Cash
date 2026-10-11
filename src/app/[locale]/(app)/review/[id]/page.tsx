@@ -24,7 +24,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 export default async function ReviewDetailPage({ params }: { params: Promise<{ locale: string; id: string }> }) {
   const { locale, id } = await params;
   setRequestLocale(locale);
-  const me = await requireUser(locale, ["CONTROLLER"]);
+  const me = await requireUser(locale, ["CONTROLLER", "MANAGER"]);
   const t = await getTranslations("review");
   const x = await getTranslations("expenses");
   const c = await getTranslations("common");
@@ -42,7 +42,8 @@ export default async function ReviewDetailPage({ params }: { params: Promise<{ l
   if (!e || e.status === "DRAFT") notFound();
 
   const bal = await getAgentBalance(e.agentId);
-  const canDecide = e.status === "SUBMITTED" && e.agentId !== me.id;
+  const myStatus = me.role === "MANAGER" ? "CONTROLLER_APPROVED" : "SUBMITTED";
+  const canDecide = e.status === myStatus && e.agentId !== me.id;
 
   return (
     <>
@@ -89,7 +90,7 @@ export default async function ReviewDetailPage({ params }: { params: Promise<{ l
           </Card>
 
           {canDecide ? (
-            <Card title={t("decision")}>
+            <Card title={me.role === "MANAGER" ? t("decisionManager") : t("decision")}>
               <ReviewForm action={reviewAction.bind(null, e.id)} locale={locale} />
             </Card>
           ) : e.agentId === me.id ? (
@@ -98,7 +99,7 @@ export default async function ReviewDetailPage({ params }: { params: Promise<{ l
 
           <ReviewHistory
             locale={locale}
-            reviews={e.reviews.map((r) => ({ id: r.id, decision: r.decision, reason: r.reason, createdAt: r.createdAt, reviewerName: r.reviewer.name }))}
+            reviews={e.reviews.map((r) => ({ id: r.id, decision: r.decision, reason: r.reason, createdAt: r.createdAt, reviewerName: r.reviewer.name, stage: r.stage }))}
           />
         </div>
       </div>

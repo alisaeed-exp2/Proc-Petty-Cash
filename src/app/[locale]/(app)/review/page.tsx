@@ -4,29 +4,38 @@ import { requireUser } from "@/lib/session";
 import { localName } from "@/lib/names";
 import { formatHalalas } from "@/lib/ledger/money";
 import { formatDateTime } from "@/lib/format";
-import { Card, Empty, Notice, PageHeader, Table, btnSecondary, td, tdNum, th, thNum } from "@/components/ui";
-import { FlagBadges } from "@/components/expense-view";
+import { Card, Empty, Notice, PageHeader, btnSecondary } from "@/components/ui";
+import { BulkQueue } from "@/components/bulk-queue";
 import { Link } from "@/i18n/navigation";
+import { bulkApproveAction } from "./actions";
+
+const DONE = ["rejected", "forwarded", "finalApproved", "bulkForwarded", "bulkFinal"] as const;
 
 export default async function ReviewQueuePage({
   params,
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ filter?: string; done?: string }>;
+  searchParams: Promise<{ filter?: string; done?: string; n?: string; skipped?: string }>;
 }) {
   const { locale } = await params;
-  const { filter, done } = await searchParams;
+  const { filter, done, n, skipped } = await searchParams;
   setRequestLocale(locale);
-  await requireUser(locale, ["CONTROLLER"]);
+  const me = await requireUser(locale, ["CONTROLLER", "MANAGER"]);
   const t = await getTranslations("review");
+  const isManager = me.role === "MANAGER";
 
   const flagWhere =
     filter === "overspend" ? { overspendFlag: true } : filter === "duplicate" ? { duplicateFlag: true } : {};
   const items = await prisma.expense.findMany({
-    where: { status: "SUBMITTED", ...flagWhere },
+    where: { status: isManager ? "CONTROLLER_APPROVED" : "SUBMITTED", ...flagWhere },
     orderBy: { submittedAt: "asc" },
-    include: { agent: { select: { name: true } }, company: true, project: true },
+    include: {
+      agent: { select: { name: true } },
+      company: true,
+      project: true,
+      reviews: { where: { stage: "CONTROLLER", decision: "APPROVED" }, orderBy: { createdAt: "desc" }, take: 1, include: { reviewer: { select: { name: true } } } },
+    },
   });
 
   const filters = [
@@ -34,11 +43,16 @@ export default async function ReviewQueuePage({
     { key: "overspend", href: "/review?filter=overspend" },
     { key: "duplicate", href: "/review?filter=duplicate" },
   ];
+  const doneKey = (DONE as readonly string[]).includes(done ?? "") ? done : null;
 
   return (
     <>
-      <PageHeader title={t("title")} subtitle={t("subtitle")} />
-      {done && <div className="mb-4"><Notice tone="good">{t(`done.${done === "approved" ? "approved" : "rejected"}`)}</Notice></div>}
+      <PageHeader title={isManager ? t("titleManager") : t("title")} subtitle={isManager ? t("subtitleManager") : t("subtitle")} />
+      {doneKey && (
+        <div className="mb-4">
+          <Notice tone="good">{t(`done.${doneKey}`, { n: n ?? "0", skipped: skipped ?? "0" })}</Notice>
+        </div>
+      )}
 
       <div className="mb-4 flex flex-wrap gap-2">
         {filters.map((f) => {
@@ -60,39 +74,24 @@ export default async function ReviewQueuePage({
         {items.length === 0 ? (
           <Empty>{t("empty")}</Empty>
         ) : (
-          <Table>
-            <thead>
-              <tr>
-                <th className={th}>{t("submitted")}</th>
-                <th className={th}>{t("agent")}</th>
-                <th className={th}>{t("vendor")}</th>
-                <th className={th}>{t("company")}</th>
-                <th className={thNum}>{t("total")}</th>
-                <th className={th}>{t("flags")}</th>
-                <th className={th} />
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((e) => (
-                <tr key={e.id}>
-                  <td className={td}>{formatDateTime(e.submittedAt, locale)}</td>
-                  <td className={td}>{e.agent.name}</td>
-                  <td className={td}>{e.vendorName ?? "-"}</td>
-                  <td className={td}>
-                    {localName(e.company, locale)}
-                    {e.project && <div className="text-xs text-muted">{localName(e.project, locale)}</div>}
-                  </td>
-                  <td className={tdNum}>{e.total === null ? "-" : formatHalalas(e.total)}</td>
-                  <td className={td}><FlagBadges overspend={e.overspendFlag} duplicate={e.duplicateFlag} /></td>
-                  <td className={td}>
-                    <Link href={`/review/${e.id}`} className="text-sm font-medium text-ocean underline underline-offset-4">
-                      {t("open")}
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </Table>
+          <BulkQueue
+            action={bulkApproveAction}
+            locale={locale}
+            showApprover={isManager}
+            rows={items.map((e) => ({
+              id: e.id,
+              submitted: formatDateTime(e.submittedAt, locale),
+              agent: e.agent.name,
+              vendor: e.vendorName ?? "-",
+              company: localName(e.company, locale),
+              project: e.project ? localName(e.project, locale) : null,
+              total: e.total === null ? "-" : formatHalalas(e.total),
+              overspend: e.overspendFlag,
+              duplicate: e.duplicateFlag,
+              selectable: e.agentId !== me.id && e.total !== null && e.total > 0,
+              controllerApprover: e.reviews[0]?.reviewer.name ?? null,
+            }))}
+          />
         )}
       </Card>
     </>

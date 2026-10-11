@@ -17,7 +17,7 @@ export async function loadLedger(agentId?: string): Promise<{ ledger: LedgerRow[
       select: { type: true, agentId: true, amount: true },
     }),
     prisma.expense.findMany({
-      where: { ...(agentId ? { agentId } : {}), status: { in: ["SUBMITTED", "REJECTED", "APPROVED"] } },
+      where: { ...(agentId ? { agentId } : {}), status: { in: ["SUBMITTED", "CONTROLLER_APPROVED", "REJECTED", "APPROVED"] } },
       select: { agentId: true, status: true, total: true },
     }),
   ]);

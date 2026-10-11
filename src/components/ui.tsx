@@ -105,6 +105,7 @@ export function ProgressBar({ percent, tone }: { percent: number; tone?: "auto" 
 const badgeTone: Record<string, string> = {
   APPROVED: "bg-status-approved/10 text-status-approved",
   SUBMITTED: "bg-status-pending/10 text-status-pending",
+  CONTROLLER_APPROVED: "bg-gold-25 text-copper",
   REJECTED: "bg-status-rejected/10 text-status-rejected",
   DRAFT: "bg-gray text-muted",
   FLAG: "bg-status-flag/10 text-status-flag",

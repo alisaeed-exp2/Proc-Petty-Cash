@@ -185,7 +185,7 @@ export async function saveExpenseAction(expenseId: string, _prev: FormState, for
         vendorVatNo: vatNo,
         total,
         invoiceNumber: { equals: d.invoiceNumber, mode: "insensitive" },
-        status: { in: ["SUBMITTED", "APPROVED"] },
+        status: { in: ["SUBMITTED", "CONTROLLER_APPROVED", "APPROVED"] },
       },
       select: { id: true },
     });
@@ -198,7 +198,7 @@ export async function saveExpenseAction(expenseId: string, _prev: FormState, for
         where: {
           sha256: { in: mine.map((m) => m.sha256) },
           expenseId: { not: expense.id },
-          expense: { status: { in: ["SUBMITTED", "APPROVED"] } },
+          expense: { status: { in: ["SUBMITTED", "CONTROLLER_APPROVED", "APPROVED"] } },
         },
         select: { id: true },
       });

@@ -202,7 +202,7 @@ export async function buildReport(
   // pending: submitted (awaiting controller) and rejected (unresolved with the agent)
   const rows = await prisma.expense.findMany({
     where: {
-      status: { in: ["SUBMITTED", "REJECTED"] },
+      status: { in: ["SUBMITTED", "CONTROLLER_APPROVED", "REJECTED"] },
       ...(agentId ? { agentId } : {}),
       ...(f.companyId ? { companyId: f.companyId } : {}),
     },

@@ -19,6 +19,9 @@ const TEXT = {
     rejectedSubject: (total: string) => `Your invoice was rejected (${total} SAR)`,
     rejectedBody: (vendor: string, total: string, reason: string) =>
       `Your invoice from ${vendor} for ${total} SAR was rejected. Reason: ${reason}. Please correct it and resubmit; the amount stays unresolved with you until then.`,
+    awaitingSubject: (agent: string, total: string) => `Waiting for your approval: ${agent}, ${total} SAR`,
+    awaitingBody: (agent: string, vendor: string, total: string) =>
+      `The expense controller approved an invoice from ${vendor} for ${total} SAR submitted by ${agent}. It now needs your final approval.`,
     open: "Open in the app",
   },
   ar: {
@@ -34,6 +37,9 @@ const TEXT = {
     rejectedSubject: (total: string) => `تم رفض فاتورتك (${total} ريال)`,
     rejectedBody: (vendor: string, total: string, reason: string) =>
       `تم رفض فاتورتك من ${vendor} بمبلغ ${total} ريال. السبب: ${reason}. يرجى تصحيحها وإعادة إرسالها؛ يبقى المبلغ غير مسوّى عليك حتى ذلك الحين.`,
+    awaitingSubject: (agent: string, total: string) => `بانتظار اعتمادك: ${agent}، ${total} ريال`,
+    awaitingBody: (agent: string, vendor: string, total: string) =>
+      `اعتمد مراقب المصروفات فاتورة من ${vendor} بمبلغ ${total} ريال أرسلها ${agent}. وهي الآن بحاجة إلى اعتمادك النهائي.`,
     open: "فتح في التطبيق",
   },
 } as const;
@@ -107,22 +113,38 @@ export async function notifySubmitted(expenseId: string): Promise<void> {
   }
 }
 
-/** Controller decided: tell the agent. */
+/**
+ * A reviewer decided. Controller approval -> tell the managers it is waiting for them.
+ * Manager approval or any rejection -> tell the agent.
+ */
 export async function notifyReviewed(expenseId: string): Promise<void> {
   if (!process.env.RESEND_API_KEY) return;
   const e = await prisma.expense.findUnique({
     where: { id: expenseId },
     include: {
-      agent: { select: { email: true, locale: true } },
+      agent: { select: { name: true, email: true, locale: true } },
       reviews: { orderBy: { createdAt: "desc" }, take: 1 },
     },
   });
   const review = e?.reviews[0];
   if (!e || !review) return;
-  const l = lang(e.agent.locale);
-  const t = TEXT[l];
   const total = formatHalalas(e.total ?? 0);
   const vendor = e.vendorName ?? "-";
+
+  if (review.decision === "APPROVED" && review.stage === "CONTROLLER") {
+    const managers = await prisma.user.findMany({ where: { role: "MANAGER", active: true }, select: { email: true, locale: true } });
+    await Promise.all(
+      managers.map((u) => {
+        const l = lang(u.locale);
+        const t = TEXT[l];
+        return send(u.email, t.awaitingSubject(e.agent.name, total), l, t.awaitingBody(e.agent.name, vendor, total), `/review/${e.id}`);
+      }),
+    );
+    return;
+  }
+
+  const l = lang(e.agent.locale);
+  const t = TEXT[l];
   if (review.decision === "APPROVED") {
     await send(e.agent.email, t.approvedSubject(total), l, t.approvedBody(vendor, total), `/expenses/${e.id}`);
   } else {

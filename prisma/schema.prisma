@@ -24,9 +24,15 @@ enum Locale {
 
 enum ExpenseStatus {
   DRAFT
-  SUBMITTED
+  SUBMITTED // waiting for the expense controller
+  CONTROLLER_APPROVED // controller approved, waiting for the procurement manager
   APPROVED
   REJECTED
+}
+
+enum ReviewStage {
+  CONTROLLER
+  MANAGER
 }
 
 enum ReviewDecision {
@@ -198,6 +204,7 @@ model ExpenseReview {
   expense    Expense        @relation(fields: [expenseId], references: [id])
   reviewerId String
   reviewer   User           @relation(fields: [reviewerId], references: [id])
+  stage      ReviewStage    @default(CONTROLLER)
   decision   ReviewDecision
   reason     String? // required when rejecting (enforced in code)
   createdAt  DateTime       @default(now())

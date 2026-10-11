@@ -16,8 +16,12 @@
       "duplicate": "Possible duplicates"
     },
     "done": {
-      "approved": "Approved and recorded in the consumption history.",
-      "rejected": "Rejected and returned to the agent."
+      "approved": "Approved.",
+      "rejected": "Rejected and returned to the agent.",
+      "forwarded": "Approved by you and sent to the Procurement Manager for final approval.",
+      "finalApproved": "Final approval given. The expense is now in the consumption history.",
+      "bulkForwarded": "{n} sent to the Procurement Manager for final approval. {skipped} skipped.",
+      "bulkFinal": "{n} given final approval and recorded in the consumption history. {skipped} skipped."
     },
     "overspendNote": "This expense is more than the agent's available balance ({available} SAR). Approve only if it is justified.",
     "duplicateNote": "An invoice with the same vendor VAT number, invoice number and total, or the same file, was already submitted.",
@@ -33,7 +37,17 @@
       "notFound": "Expense not found.",
       "alreadyReviewed": "This expense has already been reviewed.",
       "ownExpense": "You cannot review your own expense.",
-      "reasonRequired": "Please write the reason for rejecting."
-    }
+      "reasonRequired": "Please write the reason for rejecting.",
+      "nothingSelected": "Select at least one invoice."
+    },
+    "titleManager": "Final approval",
+    "subtitleManager": "Invoices approved by the expense controller, waiting for your final approval.",
+    "decisionManager": "Final approval",
+    "controllerApproval": "Controller approved by",
+    "selectAll": "Select all",
+    "approveSelected": "Approve selected ({count})",
+    "flaggedSelected": "{count, plural, one {# flagged invoice selected} other {# flagged invoices selected}}",
+    "bulkConfirm": "Approve {count, plural, one {# invoice} other {# invoices}}?",
+    "bulkConfirmFlagged": "Approve {count, plural, one {# invoice} other {# invoices}}? {flagged} of them {flagged, plural, one {is} other {are}} flagged (over limit or possible duplicate)."
   }
 }

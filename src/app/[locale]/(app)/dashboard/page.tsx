@@ -35,7 +35,10 @@ async function AgentDashboard({ user, locale, t, c }: { user: AppUser; locale: s
     prisma.expense.findMany({ where: { agentId: user.id }, orderBy: { createdAt: "desc" }, take: 6, include: { company: true } }),
     prisma.expense.groupBy({ by: ["status"], where: { agentId: user.id }, _count: true }),
   ]);
-  const count = (s: string) => counts.find((r) => r.status === s)?._count ?? 0;
+  const count = (s: string) =>
+    s === "SUBMITTED"
+      ? counts.filter((r) => r.status === "SUBMITTED" || r.status === "CONTROLLER_APPROVED").reduce((n, r) => n + r._count, 0)
+      : (counts.find((r) => r.status === s)?._count ?? 0);
 
   return (
     <>
@@ -114,10 +117,11 @@ async function AgentDashboard({ user, locale, t, c }: { user: AppUser; locale: s
 }
 
 async function ManagerDashboard({ locale, t, c }: { locale: string; t: T; c: T }) {
-  const [summary, agents, pendingFlags, byCompany, companies, expenseEntries] = await Promise.all([
+  const [summary, agents, pendingFlags, awaitingMe, byCompany, companies, expenseEntries] = await Promise.all([
     getManagerSummary(),
     getAllAgentBalances(),
-    prisma.expense.groupBy({ by: ["overspendFlag", "duplicateFlag"], where: { status: "SUBMITTED" }, _count: true }),
+    prisma.expense.groupBy({ by: ["overspendFlag", "duplicateFlag"], where: { status: { in: ["SUBMITTED", "CONTROLLER_APPROVED"] } }, _count: true }),
+    prisma.expense.count({ where: { status: "CONTROLLER_APPROVED" } }),
     prisma.expense.groupBy({ by: ["companyId"], where: { status: "APPROVED" }, _sum: { total: true } }),
     prisma.company.findMany({ select: { id: true, nameEn: true, nameAr: true } }),
     prisma.ledgerEntry.findMany({
@@ -148,6 +152,14 @@ async function ManagerDashboard({ locale, t, c }: { locale: string; t: T; c: T }
 
   return (
     <>
+      {awaitingMe > 0 && (
+        <div className="mb-4">
+          <Notice tone="info">
+            {t("manager.awaitingNote", { count: awaitingMe })}{" "}
+            <Link href="/review" className="font-medium underline underline-offset-4">{t("manager.openApprovals")}</Link>
+          </Notice>
+        </div>
+      )}
       {flagged > 0 && (
         <div className="mb-4">
           <Notice tone="warn">{t("manager.flaggedNote", { count: flagged })}</Notice>

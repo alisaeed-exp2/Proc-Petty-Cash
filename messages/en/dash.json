@@ -32,7 +32,9 @@
       "byAgent": "Agents",
       "manage": "Allocate cash",
       "noAgents": "No purchase agents yet.",
-      "noData": "Nothing to show yet."
+      "noData": "Nothing to show yet.",
+      "awaitingNote": "{count, plural, one {# invoice is} other {# invoices are}} waiting for your final approval.",
+      "openApprovals": "Open approvals"
     },
     "controller": {
       "waiting": "Waiting for review",

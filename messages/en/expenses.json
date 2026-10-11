@@ -45,9 +45,10 @@
     "reviewHistory": "Review history",
     "status": {
       "DRAFT": "Draft",
-      "SUBMITTED": "Pending approval",
+      "SUBMITTED": "Awaiting controller",
       "APPROVED": "Approved",
-      "REJECTED": "Rejected"
+      "REJECTED": "Rejected",
+      "CONTROLLER_APPROVED": "Awaiting manager approval"
     },
     "flags": {
       "overspend": "Over limit",
@@ -77,6 +78,10 @@
       "notDeletable": "Only drafts that were never submitted can be deleted."
     },
     "deleteDraft": "Delete draft",
-    "deleteConfirm": "Delete this draft and its uploaded files? This cannot be undone."
+    "deleteConfirm": "Delete this draft and its uploaded files? This cannot be undone.",
+    "stage": {
+      "CONTROLLER": "Controller",
+      "MANAGER": "Manager"
+    }
   }
 }
