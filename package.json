@@ -18,6 +18,9 @@
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@fontsource/changa": "^5.0.0",
+    "@fontsource/noto-sans": "^5.0.0",
+    "@fontsource/noto-serif": "^5.0.0",
     "@prisma/client": "^6.0.0",
     "bcryptjs": "^2.4.3",
     "next": "^15.5.0",

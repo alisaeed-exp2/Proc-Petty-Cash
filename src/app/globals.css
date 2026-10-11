@@ -47,8 +47,9 @@
 
   /* English: Noto Serif for titles, Noto Sans for dense UI (tables, forms).
      Arabic: Changa (the guide's Arabic typeface) for everything. */
-  --font-sans: var(--font-ui), var(--font-arabic), system-ui, sans-serif;
-  --font-display: var(--font-serif), var(--font-arabic), Georgia, serif;
+  --font-sans: "Noto Sans", "Changa", system-ui, sans-serif;
+  --font-display: "Noto Serif", "Changa", Georgia, serif;
+  --font-arabic: "Changa", "Noto Sans", system-ui, sans-serif;
 }
 
 :root {
@@ -63,7 +64,7 @@ body {
 }
 
 html[dir="rtl"] body {
-  font-family: var(--font-arabic), var(--font-ui), system-ui, sans-serif;
+  font-family: var(--font-arabic);
 }
 
 /* Arabic must never be letter-spaced: it breaks the joined letterforms. */
