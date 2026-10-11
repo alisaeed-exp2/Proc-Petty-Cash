@@ -35,7 +35,7 @@
     "replaceHint": "Upload a new file if the invoice needs to be replaced. The earlier version is kept.",
     "rejectedTitle": "Rejected by the controller.",
     "rejectedNote": "The amount stays unresolved with you until you correct and resubmit it.",
-    "ocrDone": "We read the invoice. Please check every field against the file before submitting.",
+    "ocrDone": "We read the invoice (and its ZATCA QR code when visible). Please check every field against the file before submitting.",
     "ocrSkipped": "Automatic reading is not switched on yet. Please type the invoice details from the file.",
     "ocrFailed": "We could not read this invoice automatically. Please type the details from the file.",
     "noFiles": "No files.",

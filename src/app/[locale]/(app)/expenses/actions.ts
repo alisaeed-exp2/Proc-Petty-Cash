@@ -13,6 +13,7 @@ import { getAgentBalance } from "@/lib/ledger/db";
 import { parseDateInput } from "@/lib/format";
 import { readUploads, storeExpenseFiles } from "@/lib/expense-files";
 import { extractInvoice } from "@/lib/ocr";
+import { parseZatcaQr } from "@/lib/zatca";
 import { storageConfigured } from "@/lib/storage";
 import { notifySubmitted } from "@/lib/notify";
 import type { FormState } from "@/components/action-form";
@@ -54,27 +55,30 @@ export async function createExpenseAction(_prev: FormState, formData: FormData):
 
   // Read the first file with OCR. A failure never blocks the agent: they can type the fields.
   const ocr = await extractInvoice(read.files[0]);
-  if (ocr.status === "done") {
-    const f = ocr.fields;
+  const qr = parseZatcaQr(String(formData.get("qr") ?? ""));
+  const o = ocr.status === "done" ? ocr.fields : null;
+  if (o || qr) {
+    // The QR code is signed by the seller's system, so it wins over what the model read.
     await prisma.expense.update({
       where: { id: expense.id },
       data: {
-        vendorName: f.vendorName,
-        vendorVatNo: f.vendorVatNo,
-        invoiceNumber: f.invoiceNumber,
-        invoiceDate: parseDateInput(f.invoiceDate),
-        subtotal: f.subtotal,
-        vatAmount: f.vatAmount,
-        total: f.total,
-        ocrRaw: ocr.raw as Prisma.InputJsonObject,
+        vendorName: qr?.vendorName ?? o?.vendorName ?? null,
+        vendorVatNo: qr?.vendorVatNo ?? o?.vendorVatNo ?? null,
+        invoiceNumber: o?.invoiceNumber ?? null,
+        invoiceDate: parseDateInput(qr?.invoiceDate ?? o?.invoiceDate ?? null),
+        subtotal: qr?.subtotal ?? o?.subtotal ?? null,
+        vatAmount: qr?.vatAmount ?? o?.vatAmount ?? null,
+        total: qr?.total ?? o?.total ?? null,
+        zatcaDecoded: !!qr,
+        ocrRaw: (ocr.status === "done" ? ocr.raw : { qr: true }) as Prisma.InputJsonObject,
       },
     });
   } else if (ocr.status === "failed") {
     console.error("OCR failed:", ocr.message);
   }
-  await audit(me.id, "expense.create", "Expense", expense.id, { ocr: ocr.status });
+  await audit(me.id, "expense.create", "Expense", expense.id, { ocr: ocr.status, qr: !!qr });
   revalidatePath("/", "layout");
-  return redirect({ href: `/expenses/${expense.id}?ocr=${ocr.status}`, locale });
+  return redirect({ href: `/expenses/${expense.id}?ocr=${o || qr ? "done" : ocr.status}`, locale });
 }
 
 const fieldsSchema = z.object({

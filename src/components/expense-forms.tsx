@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { btnPrimary, btnSecondary, inputCls, labelCls, hintCls, Notice } from "@/components/ui";
 import { emptyState, type FormState } from "@/components/action-form";
@@ -58,9 +58,41 @@ export function NewExpenseForm({
   const t = useTranslations("expenses");
   const c = useTranslations("common");
   const [state, formAction, pending] = useActionState(action, emptyState);
+  const qrRef = useRef<HTMLInputElement>(null);
+
+  // Saudi e-invoices carry a ZATCA QR code. When a photo has one, decode it in the browser
+  // so the server can use the signed data instead of guessing from the picture.
+  async function scanQr(files: FileList | null) {
+    if (qrRef.current) qrRef.current.value = "";
+    if (!files) return;
+    try {
+      const { default: jsQR } = await import("jsqr");
+      for (const file of Array.from(files)) {
+        if (!file.type.startsWith("image/")) continue;
+        const bmp = await createImageBitmap(file);
+        const scale = Math.min(1, 2000 / Math.max(bmp.width, bmp.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(bmp.width * scale);
+        canvas.height = Math.round(bmp.height * scale);
+        const ctx = canvas.getContext("2d");
+        if (!ctx) continue;
+        ctx.drawImage(bmp, 0, 0, canvas.width, canvas.height);
+        const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(img.data, img.width, img.height);
+        if (code?.data && qrRef.current) {
+          qrRef.current.value = code.data;
+          return;
+        }
+      }
+    } catch {
+      // Scanning is a bonus; the server still reads the invoice.
+    }
+  }
+
   return (
     <form action={formAction} className="space-y-5">
       <input type="hidden" name="locale" value={locale} />
+      <input type="hidden" name="qr" ref={qrRef} />
       <CompanyProject companies={companies} />
       <div>
         <label className={labelCls} htmlFor="files">{t("files")} *</label>
@@ -70,6 +102,7 @@ export function NewExpenseForm({
           type="file"
           multiple
           required
+          onChange={(e) => void scanQr(e.target.files)}
           accept="application/pdf,image/jpeg,image/png,image/webp"
           className={`${inputCls} file:me-3 file:rounded file:border-0 file:bg-ocean-10 file:px-3 file:py-1.5 file:text-sm file:text-ocean`}
         />

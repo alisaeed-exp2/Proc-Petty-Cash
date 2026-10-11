@@ -25,6 +25,7 @@
     "@prisma/client": "^6.0.0",
     "bcryptjs": "^2.4.3",
     "exceljs": "^4.4.0",
+    "jsqr": "^1.4.0",
     "next": "^15.5.0",
     "next-auth": "^5.0.0-beta.25",
     "next-intl": "^4.0.0",
