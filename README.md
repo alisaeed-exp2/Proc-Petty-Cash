@@ -6,7 +6,7 @@ Next.js (App Router) · TypeScript · Tailwind v4 · Prisma + Postgres · Auth.j
 ## Status: foundation (step 1)
 
 Done:
-- Theme tokens (navy / cream / gold) in `src/app/globals.css`; temporary monogram logo in `public/logo-monogram.png`
+- Official brand applied: colours, fonts and logos from the Al Khalejiah brand guidelines (see Branding below)
 - Bilingual routing `/en`, `/ar` with `dir` and `lang` set per locale, language toggle
 - Prisma schema for the full data model (`prisma/schema.prisma`), money as integer halalas
 - Email + password auth, three roles (`MANAGER`, `CONTROLLER`, `AGENT`), no public sign-up
@@ -38,7 +38,12 @@ Tests (no install needed beyond Node 22): `npm test`
 
 ## Branding
 
-Replace `public/logo-monogram.png`, `src/components/brand-logo.tsx` and the colour tokens in `globals.css` when the official identity arrives. Nothing else hard-codes brand values.
+From the Al Khalejiah brand guidelines:
+
+- **Colours** (tokens in `src/app/globals.css`): Ocean `#043E50` (primary, ~40% of any screen), Gold `#C7AB6E`, Copper `#C48063`, Offwhite `#E9E3DB` (~10% each). Secondary: Gray `#EEEDEB`, Peach `#E6B9A6`, Sage `#939185`, Slate `#2F3645`.
+- **Fonts:** Noto Serif (English titles) and Changa (Arabic). Noto Sans is used for dense UI such as tables and forms.
+- **Logos** (`public/brand/*.svg`, vectors extracted from the guidelines PDF): `emblem`, `logo-en`, `logo-ar`, `logo-bilingual`, `wordmark-en`, `wordmark-ar`, each in the default gold + ocean colourway, `-white` (for Ocean backgrounds) and `-ocean` (single colour). Use through `src/components/brand-logo.tsx`: English logo on `/en`, Arabic logo on `/ar`.
+- **Logo rules from the guide:** never recolour, rotate, stretch or add shadows; keep clear space equal to the emblem's diamond; English logo sits in the left corner, Arabic in the right; on Ocean use the white version only.
 
 ## Deploy on Railway
 

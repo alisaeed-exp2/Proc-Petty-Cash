@@ -6,7 +6,7 @@ import { Link } from "@/i18n/navigation";
 import { loginAction, type LoginState } from "./actions";
 
 const fieldClass =
-  "mt-1.5 block w-full rounded-control border border-line bg-white px-3.5 py-3 text-base text-ink shadow-sm outline-none transition focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20";
+  "mt-1.5 block w-full rounded-control border border-line bg-white px-3.5 py-3 text-base text-ink shadow-sm outline-none transition focus:border-ocean focus:ring-2 focus:ring-ocean/20";
 
 export function LoginForm() {
   const t = useTranslations("login");
@@ -40,13 +40,13 @@ export function LoginForm() {
       <button
         type="submit"
         disabled={pending}
-        className="w-full rounded-control bg-brand-600 px-4 py-3 text-base font-semibold text-white transition hover:bg-brand-700 disabled:opacity-60"
+        className="w-full rounded-control bg-ocean px-4 py-3 text-base font-semibold text-white transition hover:bg-slate disabled:opacity-60"
       >
         {pending ? t("submitting") : t("submit")}
       </button>
 
       <div className="text-center">
-        <Link href="/forgot-password" className="text-sm text-brand-700 underline underline-offset-4 hover:text-brand-900">
+        <Link href="/forgot-password" className="text-sm text-ocean-75 underline underline-offset-4 hover:text-ocean">
           {t("forgot")}
         </Link>
       </div>

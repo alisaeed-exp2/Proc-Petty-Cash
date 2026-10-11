@@ -1,8 +1,7 @@
-import Image from "next/image";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { redirect } from "@/i18n/navigation";
 import { auth } from "@/auth";
-import { BrandLogo } from "@/components/brand-logo";
+import { BrandEmblem, BrandLogo } from "@/components/brand-logo";
 import { LanguageToggle } from "@/components/language-toggle";
 import { LoginForm } from "./login-form";
 
@@ -25,37 +24,36 @@ export default async function LoginPage({ params }: { params: Promise<{ locale: 
 
   return (
     <main className="grid min-h-dvh lg:grid-cols-2">
-      {/* Brand panel: sits on the start side, so it flips right in Arabic. */}
-      <section className="relative flex flex-col overflow-hidden bg-brand-800 px-8 py-10 text-cream-50 sm:px-12 lg:py-12">
-        <Image
-          src="/logo-monogram.png"
-          alt=""
-          width={520}
-          height={546}
-          aria-hidden
-          className="pointer-events-none absolute -bottom-24 -end-24 hidden w-[34rem] opacity-[0.06] lg:block"
+      {/* Brand panel (Ocean). It sits on the start side, so it flips to the right in Arabic.
+          The guide keeps the English logo in the left corner and the Arabic logo in the right. */}
+      <section className="relative flex flex-col overflow-hidden bg-ocean px-8 py-10 text-white sm:px-14 lg:py-14">
+        <BrandEmblem
+          tone="white"
+          size={560}
+          className="pointer-events-none absolute -bottom-32 -end-32 hidden w-[36rem] opacity-[0.05] lg:block"
         />
 
-        <BrandLogo company={brand("company")} product={brand("product")} />
+        <BrandLogo locale={locale} tone="white" alt={brand("company")} width={150} priority />
 
         <div className="relative my-12 lg:my-auto">
-          <div className="mb-8 h-px w-16 bg-gold-400/70" />
-          <h1 className="max-w-xl font-display text-4xl font-medium leading-tight sm:text-5xl rtl:leading-snug">
+          <p className="text-xs font-medium uppercase tracking-[0.24em] text-gold">{brand("product")}</p>
+          <div className="my-6 h-px w-16 bg-gold/70" />
+          <h1 className="max-w-xl font-display text-4xl font-semibold leading-tight sm:text-[2.75rem]">
             {t("headline")}
           </h1>
-          <p className="mt-5 max-w-lg text-lg text-brand-100/90">{t("subheadline")}</p>
+          <p className="mt-5 max-w-lg text-lg leading-relaxed text-ocean-25">{t("subheadline")}</p>
 
           <ul className="mt-10 max-w-xl space-y-6">
             {features.map((key) => (
               <li key={key} className="flex gap-4">
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-control border border-white/10 bg-brand-700/60 text-gold-400">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-control border border-white/15 bg-white/5 text-gold">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                     {icons[key]}
                   </svg>
                 </span>
                 <div>
                   <h2 className="font-semibold">{t(`features.${key}.title`)}</h2>
-                  <p className="mt-1 text-sm leading-relaxed text-brand-100/80">{t(`features.${key}.body`)}</p>
+                  <p className="mt-1 text-sm leading-relaxed text-ocean-25">{t(`features.${key}.body`)}</p>
                 </div>
               </li>
             ))}
@@ -63,12 +61,12 @@ export default async function LoginPage({ params }: { params: Promise<{ locale: 
         </div>
       </section>
 
-      <section className="relative flex flex-col bg-cream-100 px-8 py-8 sm:px-12">
+      <section className="relative flex flex-col bg-offwhite-50 px-8 py-8 sm:px-14">
         <div className="flex justify-end">
           <LanguageToggle />
         </div>
         <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-10">
-          <h2 className="font-display text-4xl font-medium text-brand-900">{t("welcome")}</h2>
+          <h2 className="font-display text-4xl font-semibold text-ocean">{t("welcome")}</h2>
           <p className="mt-2 text-muted">{t("welcomeBody")}</p>
           <LoginForm />
         </div>

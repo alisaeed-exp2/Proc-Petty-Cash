@@ -1,27 +1,68 @@
 import Image from "next/image";
 
 /**
- * Temporary logo: the gold monogram supplied by the client plus a text wordmark.
- * Swap /public/logo-monogram.png (or this component) once the official files arrive.
+ * Official Al Khalejiah logo (vectors extracted from the brand guidelines PDF).
+ * Per the guide: the English logo is used in English screens and the Arabic logo in
+ * Arabic screens, and the logo is never recoloured, rotated, shadowed or stretched.
+ * Allowed colourways: "color" (gold emblem + ocean wordmark) on light backgrounds,
+ * "white" on Ocean backgrounds, "ocean" (single colour) when the main version
+ * cannot be used.
  */
+export type LogoTone = "color" | "white" | "ocean";
+
+// Intrinsic aspect ratio of the stacked English / Arabic signature (362 x 289).
+const RATIO = 289 / 362;
+
 export function BrandLogo({
-  company,
-  product,
-  size = 56,
+  locale,
+  alt,
+  tone = "color",
+  width = 160,
+  priority = false,
+  className,
 }: {
-  company: string;
-  product: string;
-  size?: number;
+  locale: string;
+  alt: string;
+  tone?: LogoTone;
+  width?: number;
+  priority?: boolean;
+  className?: string;
 }) {
+  const lang = locale === "ar" ? "ar" : "en";
+  const suffix = tone === "color" ? "" : `-${tone}`;
   return (
-    <div className="flex items-center gap-4">
-      <Image src="/logo-monogram.png" alt="" width={size} height={Math.round(size * 1.05)} priority />
-      <div className="leading-tight">
-        <div className="font-display text-2xl font-medium tracking-wide text-cream-50">{company}</div>
-        <div className="mt-1 text-[11px] font-medium uppercase tracking-[0.22em] text-gold-400">
-          {product}
-        </div>
-      </div>
-    </div>
+    <Image
+      src={`/brand/logo-${lang}${suffix}.svg`}
+      alt={alt}
+      width={width}
+      height={Math.round(width * RATIO)}
+      priority={priority}
+      className={className}
+    />
+  );
+}
+
+/** The emblem on its own: favicon, watermark, compact headers. */
+export function BrandEmblem({
+  tone = "color",
+  size = 48,
+  className,
+  alt = "",
+}: {
+  tone?: LogoTone;
+  size?: number;
+  className?: string;
+  alt?: string;
+}) {
+  const suffix = tone === "color" ? "" : `-${tone}`;
+  return (
+    <Image
+      src={`/brand/emblem${suffix}.svg`}
+      alt={alt}
+      width={size}
+      height={Math.round(size * (208 / 213))}
+      className={className}
+      aria-hidden={alt === "" ? true : undefined}
+    />
   );
 }

@@ -2,20 +2,27 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { Cormorant_Garamond, IBM_Plex_Sans_Arabic, Inter } from "next/font/google";
+import { Changa, Noto_Sans, Noto_Serif } from "next/font/google";
 import { routing, localeDir } from "@/i18n/routing";
 import "../globals.css";
 
-const latin = Inter({ subsets: ["latin"], variable: "--font-latin", display: "swap" });
-const displayLatin = Cormorant_Garamond({
+// Brand typefaces: Noto Serif (English) and Changa (Arabic). Noto Sans is used for
+// dense UI such as tables and forms, to keep numbers easy to scan.
+const serif = Noto_Serif({
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  variable: "--font-display-latin",
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-serif",
   display: "swap",
 });
-const arabic = IBM_Plex_Sans_Arabic({
-  subsets: ["arabic", "latin"],
+const ui = Noto_Sans({
+  subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-ui",
+  display: "swap",
+});
+const arabic = Changa({
+  subsets: ["arabic", "latin"],
+  weight: ["300", "400", "500", "600", "700", "800"],
   variable: "--font-arabic",
   display: "swap",
 });
@@ -34,7 +41,7 @@ export async function generateMetadata({
   return {
     title: { default: t("product"), template: `%s · ${t("product")}` },
     description: t("company"),
-    icons: { icon: "/logo-monogram.png" },
+    icons: { icon: "/brand/emblem.svg" },
   };
 }
 
@@ -53,7 +60,7 @@ export default async function LocaleLayout({
     <html
       lang={locale}
       dir={localeDir(locale)}
-      className={`${latin.variable} ${displayLatin.variable} ${arabic.variable}`}
+      className={`${serif.variable} ${ui.variable} ${arabic.variable}`}
     >
       <body className="min-h-dvh">
         <NextIntlClientProvider>{children}</NextIntlClientProvider>
