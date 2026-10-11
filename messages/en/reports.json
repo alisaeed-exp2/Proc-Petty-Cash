@@ -1,1 +1,76 @@
-{}
+{
+  "reports": {
+    "title": "Reports",
+    "subtitle": "Download Excel reports. Filters apply where relevant.",
+    "subtitleAgent": "Download Excel reports of your own activity.",
+    "filterNote": "Date filters apply to invoice date (consumption, companies) and transaction date (cash movements). The agent summary and pending report always show the current position.",
+    "download": "Download Excel",
+    "clear": "Clear",
+    "yes": "Yes",
+    "empty": "No approved expenses match these filters.",
+    "count": "Approved invoices",
+    "moreReports": "More reports and exports",
+    "consumptionTitle": "Consumption history",
+    "consumptionSubtitle": "Approved expenses registered against agent allocations.",
+    "company": "Al Khalejiah Catering Company - Petty Cash",
+    "generated": "Generated",
+    "period": "Period",
+    "allDates": "All dates",
+    "currencyNote": "Amounts in SAR",
+    "totals": "Total",
+    "names": {
+      "consumption": "Consumption history",
+      "agents": "Agent summary",
+      "companies": "Company and project breakdown",
+      "cash": "Cash movements",
+      "pending": "Pending and unresolved"
+    },
+    "descriptions": {
+      "consumption": "Every approved invoice with vendor, VAT, flags and approver.",
+      "agents": "Allocation, consumption %, residual cash, pending and unresolved per agent.",
+      "companies": "Approved spending grouped by company and project.",
+      "cash": "Funding, allocations, cash returns and adjustments.",
+      "pending": "Invoices awaiting approval and rejected invoices still unresolved."
+    },
+    "types": {
+      "FUNDING": "Funding",
+      "ALLOCATION": "Allocation",
+      "RETURN": "Cash return",
+      "ADJUSTMENT": "Adjustment",
+      "EXPENSE": "Expense"
+    },
+    "cols": {
+      "invoiceDate": "Invoice date",
+      "agent": "Agent",
+      "company": "Company",
+      "project": "Project",
+      "vendor": "Vendor",
+      "vatNo": "Vendor VAT no.",
+      "invoiceNo": "Invoice no.",
+      "subtotal": "Subtotal",
+      "vat": "VAT",
+      "total": "Total",
+      "overspend": "Over limit",
+      "duplicate": "Duplicate?",
+      "approvedAt": "Approved on",
+      "approver": "Approved by",
+      "allocated": "Allocated",
+      "returned": "Returned",
+      "netAllocated": "Net allocated",
+      "consumed": "Consumed",
+      "percent": "Consumed %",
+      "residual": "Residual cash",
+      "pending": "Pending approval",
+      "unresolved": "Unresolved",
+      "available": "Available",
+      "count": "Invoices",
+      "date": "Date",
+      "type": "Type",
+      "amount": "Amount",
+      "note": "Note",
+      "status": "Status",
+      "submittedAt": "Submitted on",
+      "reason": "Rejection reason"
+    }
+  }
+}

@@ -2,6 +2,48 @@
   "dash": {
     "title": "Dashboard",
     "welcome": "Welcome, {name}",
-    "soon": "Your dashboard is being prepared."
+    "allocated": "Allocated",
+    "consumed": "Consumed",
+    "residual": "Residual cash",
+    "available": "Available to spend",
+    "availableHint": "Residual minus invoices pending approval",
+    "consumption": "Consumption",
+    "ofAllocation": "of allocation",
+    "pending": "Pending approval",
+    "unresolved": "Unresolved",
+    "agent": {
+      "unresolvedNote": "You have {count, plural, one {# rejected invoice} other {# rejected invoices}} worth {amount} SAR that still need correcting.",
+      "returnedHint": "After returning {amount} SAR",
+      "myInvoices": "My invoices",
+      "recent": "Recent invoices"
+    },
+    "manager": {
+      "funded": "Funded by Finance",
+      "ofFunded": "of funding",
+      "allocated": "Allocated to agents",
+      "pool": "Unallocated pool",
+      "residual": "Residual with agents",
+      "residualHint": "Cash agents should still hold",
+      "invoices": "{count, plural, one {# invoice} other {# invoices}}",
+      "agents": "Active agents",
+      "flaggedNote": "{count, plural, one {# pending invoice is} other {# pending invoices are}} flagged (over limit or possible duplicate).",
+      "monthly": "Approved consumption by month (SAR)",
+      "byCompany": "Consumption by company",
+      "byAgent": "Agents",
+      "manage": "Allocate cash",
+      "noAgents": "No purchase agents yet.",
+      "noData": "Nothing to show yet."
+    },
+    "controller": {
+      "waiting": "Waiting for review",
+      "flagged": "Flagged",
+      "oldest": "Oldest waiting",
+      "days": "days",
+      "decided": "Decisions made",
+      "approvedRejected": "approved / rejected",
+      "recent": "Recent decisions",
+      "openQueue": "Open review queue",
+      "by": "Reviewed by"
+    }
   }
 }
