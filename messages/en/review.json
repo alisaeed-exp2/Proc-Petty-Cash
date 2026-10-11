@@ -1,1 +1,39 @@
-{}
+{
+  "review": {
+    "title": "Review queue",
+    "subtitle": "Submitted invoices waiting for your decision, oldest first.",
+    "empty": "Nothing is waiting for review.",
+    "submitted": "Submitted",
+    "agent": "Agent",
+    "vendor": "Vendor",
+    "company": "Company",
+    "total": "Total",
+    "flags": "Flags",
+    "open": "Review",
+    "filters": {
+      "all": "All",
+      "overspend": "Over limit",
+      "duplicate": "Possible duplicates"
+    },
+    "done": {
+      "approved": "Approved and recorded in the consumption history.",
+      "rejected": "Rejected and returned to the agent."
+    },
+    "overspendNote": "This expense is more than the agent's available balance ({available} SAR). Approve only if it is justified.",
+    "duplicateNote": "An invoice with the same vendor VAT number, invoice number and total, or the same file, was already submitted.",
+    "agentPosition": "Agent position",
+    "decision": "Your decision",
+    "reason": "Reason (required when rejecting)",
+    "reasonHint": "Tell the agent what to correct",
+    "approve": "Approve",
+    "reject": "Reject",
+    "errors": {
+      "unauthorized": "You are not allowed to do that.",
+      "invalid": "This expense cannot be approved without a valid total.",
+      "notFound": "Expense not found.",
+      "alreadyReviewed": "This expense has already been reviewed.",
+      "ownExpense": "You cannot review your own expense.",
+      "reasonRequired": "Please write the reason for rejecting."
+    }
+  }
+}
