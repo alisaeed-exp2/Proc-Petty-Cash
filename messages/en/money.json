@@ -1,1 +1,63 @@
-{}
+{
+  "funding": {
+    "title": "Funding from Finance",
+    "subtitle": "Record petty-cash amounts received from the Finance department.",
+    "totalFunded": "Total funded",
+    "allocated": "Allocated to agents",
+    "pool": "Unallocated pool",
+    "history": "Funding history",
+    "empty": "No funding recorded yet.",
+    "reference": "Voucher / transfer reference",
+    "recordedBy": "Recorded by",
+    "new": "Record funding",
+    "record": "Record funding",
+    "receivedAt": "Date received",
+    "info": {
+      "recorded": "Funding recorded."
+    },
+    "errors": {
+      "unauthorized": "You are not allowed to do that.",
+      "invalid": "Please fill in the amount and date.",
+      "badAmount": "Enter a valid amount greater than zero (up to two decimals).",
+      "badDate": "Enter a valid date."
+    }
+  },
+  "allocations": {
+    "title": "Allocations & returns",
+    "subtitle": "Give agents cash from the pool and record cash they hand back.",
+    "pool": "Unallocated pool",
+    "netAllocated": "Net allocated",
+    "consumed": "Consumed",
+    "percent": "Consumed %",
+    "cashOnHand": "Cash on hand",
+    "pending": "Pending approval",
+    "agents": "Agents",
+    "noAgents": "No purchase agents yet. Create agent accounts under Users.",
+    "movements": "Recent movements",
+    "empty": "No allocations or returns yet.",
+    "type": "Type",
+    "chooseAgent": "Choose an agent",
+    "kind": {
+      "ALLOCATION": "Allocation",
+      "RETURN": "Cash return"
+    },
+    "allocateTitle": "Allocate cash",
+    "allocate": "Allocate",
+    "returnTitle": "Record cash return",
+    "returnNote": "Cash an agent hands back goes back into the unallocated pool.",
+    "recordReturn": "Record return",
+    "info": {
+      "allocated": "Cash allocated.",
+      "returned": "Return recorded."
+    },
+    "errors": {
+      "unauthorized": "You are not allowed to do that.",
+      "invalid": "Please choose an agent and fill in the amount and date.",
+      "badAmount": "Enter a valid amount greater than zero (up to two decimals).",
+      "badDate": "Enter a valid date.",
+      "badAgent": "Choose a valid purchase agent.",
+      "exceedsPool": "This is more than the unallocated pool. Record funding first or lower the amount.",
+      "exceedsCash": "This is more than the cash the agent should be holding."
+    }
+  }
+}
