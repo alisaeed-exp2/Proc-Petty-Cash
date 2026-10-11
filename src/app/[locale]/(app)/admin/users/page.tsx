@@ -2,6 +2,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { formatDate } from "@/lib/format";
+import { Link } from "@/i18n/navigation";
 import { ActionForm } from "@/components/action-form";
 import { Badge, Card, PageHeader, Table, btnSecondary, inputCls, labelCls, td, th } from "@/components/ui";
 import { createUserAction, resetPasswordAction, toggleUserActiveAction } from "./actions";
@@ -39,7 +40,7 @@ export default async function UsersPage({ params }: { params: Promise<{ locale: 
               {users.map((u) => (
                 <tr key={u.id}>
                   <td className={td}>
-                    <div className="font-medium">{u.name}</div>
+                    <Link href={`/admin/users/${u.id}`} className="font-medium text-ocean underline underline-offset-4">{u.name}</Link>
                     {u.mustChangePassword && <div className="text-xs text-status-pending">{t("users.mustChange")}</div>}
                   </td>
                   <td className={`${td} num`} dir="ltr">{u.email}</td>

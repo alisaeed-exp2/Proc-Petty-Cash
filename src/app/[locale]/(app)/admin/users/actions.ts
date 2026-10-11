@@ -67,3 +67,46 @@ export async function toggleUserActiveAction(userId: string, _prev: FormState, _
   revalidatePath("/", "layout");
   return { ok: true, error: null };
 }
+
+const updateSchema = z.object({
+  name: z.string().trim().min(2).max(120),
+  email: z.string().trim().toLowerCase().email().max(200),
+  role: z.enum(["MANAGER", "CONTROLLER", "AGENT"]),
+  locale: z.enum(["en", "ar"]),
+});
+
+export async function updateUserAction(userId: string, _prev: FormState, formData: FormData): Promise<FormState> {
+  const me = await getActionUser(["MANAGER"]);
+  if (!me) return { ok: false, error: "unauthorized" };
+  const parsed = updateSchema.safeParse({
+    name: formData.get("name"),
+    email: formData.get("email"),
+    role: formData.get("role"),
+    locale: formData.get("locale"),
+  });
+  if (!parsed.success) return { ok: false, error: "invalid" };
+  const data = parsed.data;
+
+  const target = await prisma.user.findUnique({ where: { id: userId } });
+  if (!target) return { ok: false, error: "notFound" };
+
+  if (data.email !== target.email) {
+    const other = await prisma.user.findUnique({ where: { email: data.email } });
+    if (other) return { ok: false, error: "emailTaken" };
+  }
+  if (data.role !== target.role) {
+    if (me.id === userId) return { ok: false, error: "selfRole" };
+    // A role change would orphan cash and invoices tied to the old role.
+    const [ledger, expenses, reviews] = await Promise.all([
+      prisma.ledgerEntry.count({ where: { agentId: userId } }),
+      prisma.expense.count({ where: { agentId: userId } }),
+      prisma.expenseReview.count({ where: { reviewerId: userId } }),
+    ]);
+    if (ledger + expenses + reviews > 0) return { ok: false, error: "roleLocked" };
+  }
+
+  await prisma.user.update({ where: { id: userId }, data });
+  await audit(me.id, "user.update", "User", userId, { from: { email: target.email, role: target.role }, to: { email: data.email, role: data.role } });
+  revalidatePath("/", "layout");
+  return { ok: true, error: null, info: "saved" };
+}

@@ -14,7 +14,7 @@ import { parseDateInput } from "@/lib/format";
 import { readUploads, storeExpenseFiles } from "@/lib/expense-files";
 import { extractInvoice } from "@/lib/ocr";
 import { parseZatcaQr } from "@/lib/zatca";
-import { storageConfigured } from "@/lib/storage";
+import { deleteObject, storageConfigured } from "@/lib/storage";
 import { notifySubmitted } from "@/lib/notify";
 import type { FormState } from "@/components/action-form";
 
@@ -219,4 +219,28 @@ export async function saveExpenseAction(expenseId: string, _prev: FormState, for
   await notifySubmitted(expense.id).catch((e) => console.error("notify failed", e));
   const locale = formData.get("locale") === "ar" ? "ar" : "en";
   return redirect({ href: "/expenses?submitted=1", locale });
+}
+
+/** Agents may delete their own drafts that were never submitted. */
+export async function deleteDraftAction(expenseId: string, _prev: FormState, formData: FormData): Promise<FormState> {
+  const me = await getActionUser(["AGENT"]);
+  if (!me) return { ok: false, error: "unauthorized" };
+  const expense = await prisma.expense.findFirst({
+    where: { id: expenseId, agentId: me.id },
+    include: { files: true, _count: { select: { reviews: true } } },
+  });
+  if (!expense) return { ok: false, error: "notFound" };
+  if (expense.status !== "DRAFT" || expense.submittedAt || expense._count.reviews > 0) return { ok: false, error: "notDeletable" };
+
+  await prisma.$transaction(async (tx) => {
+    await tx.expenseFile.deleteMany({ where: { expenseId } });
+    await tx.expense.delete({ where: { id: expenseId } });
+    await audit(me.id, "expense.deleteDraft", "Expense", expenseId, { files: expense.files.length }, tx);
+  });
+  if (storageConfigured()) {
+    await Promise.all(expense.files.map((f) => deleteObject(f.storageKey).catch((e) => console.error("delete object failed", e))));
+  }
+  revalidatePath("/", "layout");
+  const locale = formData.get("locale") === "ar" ? "ar" : "en";
+  return redirect({ href: "/expenses", locale });
 }

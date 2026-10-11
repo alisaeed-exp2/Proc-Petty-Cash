@@ -73,7 +73,10 @@
       "badAmount": "Enter amounts as numbers with up to two decimals.",
       "badDate": "Enter a valid date.",
       "badVat": "The VAT number must be exactly 15 digits.",
-      "inconsistent": "Subtotal plus VAT does not equal the total. Please check the amounts."
-    }
+      "inconsistent": "Subtotal plus VAT does not equal the total. Please check the amounts.",
+      "notDeletable": "Only drafts that were never submitted can be deleted."
+    },
+    "deleteDraft": "Delete draft",
+    "deleteConfirm": "Delete this draft and its uploaded files? This cannot be undone."
   }
 }

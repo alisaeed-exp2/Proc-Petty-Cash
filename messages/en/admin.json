@@ -14,15 +14,21 @@
       "tempNote": "A temporary password is generated and shown once. The user must choose their own at first sign-in.",
       "info": {
         "created": "User created. Share these sign-in details securely:",
-        "reset": "Password reset. Share these sign-in details securely:"
+        "reset": "Password reset. Share these sign-in details securely:",
+        "saved": "Saved."
       },
       "errors": {
         "unauthorized": "You are not allowed to do that.",
         "invalid": "Please check the name and email.",
         "emailTaken": "A user with this email already exists.",
         "notFound": "User not found.",
-        "selfDeactivate": "You cannot deactivate your own account."
-      }
+        "selfDeactivate": "You cannot deactivate your own account.",
+        "selfRole": "You cannot change your own role.",
+        "roleLocked": "This user already has cash or invoices on record, so the role cannot be changed. Deactivate the account and create a new one instead."
+      },
+      "edit": "Edit user",
+      "editSubtitle": "Change name, email, role or language.",
+      "save": "Save changes"
     },
     "companies": {
       "title": "Companies & projects",

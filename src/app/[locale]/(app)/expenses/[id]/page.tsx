@@ -9,7 +9,8 @@ import { Badge, Card, Notice, PageHeader, btnSecondary } from "@/components/ui";
 import { ExpenseEditForm } from "@/components/expense-forms";
 import { FileViewer, FlagBadges, ReviewHistory } from "@/components/expense-view";
 import { Link } from "@/i18n/navigation";
-import { saveExpenseAction } from "../actions";
+import { DeleteDraftForm } from "@/components/delete-draft-form";
+import { deleteDraftAction, saveExpenseAction } from "../actions";
 
 const plain = (h: number | null) => (h === null ? "" : (h / 100).toFixed(2));
 
@@ -124,6 +125,12 @@ export default async function ExpensePage({
               </dl>
             )}
           </Card>
+
+          {e.status === "DRAFT" && !e.submittedAt && (
+            <Card>
+              <DeleteDraftForm action={deleteDraftAction.bind(null, e.id)} locale={locale} />
+            </Card>
+          )}
 
           <ReviewHistory
             locale={locale}

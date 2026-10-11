@@ -14,7 +14,7 @@ const nameFields = {
 const codeField = z.string().trim().min(1).max(20).regex(/^[A-Za-z0-9_-]+$/);
 
 const createSchema = z.object({ code: codeField, ...nameFields });
-const updateSchema = z.object(nameFields);
+const updateSchema = z.object({ code: codeField, ...nameFields });
 
 function refresh() {
   revalidatePath("/", "layout");
@@ -40,8 +40,10 @@ export async function createCompanyAction(_prev: FormState, formData: FormData):
 export async function updateCompanyAction(companyId: string, _prev: FormState, formData: FormData): Promise<FormState> {
   const me = await getActionUser(["MANAGER"]);
   if (!me) return { ok: false, error: "unauthorized" };
-  const parsed = updateSchema.safeParse({ nameEn: formData.get("nameEn"), nameAr: formData.get("nameAr") });
+  const parsed = updateSchema.safeParse({ code: formData.get("code"), nameEn: formData.get("nameEn"), nameAr: formData.get("nameAr") });
   if (!parsed.success) return { ok: false, error: "invalid" };
+  const clash = await prisma.company.findFirst({ where: { code: parsed.data.code, id: { not: companyId } } });
+  if (clash) return { ok: false, error: "codeTaken" };
   await prisma.company.update({ where: { id: companyId }, data: parsed.data });
   await audit(me.id, "company.update", "Company", companyId, parsed.data);
   refresh();
@@ -82,8 +84,12 @@ export async function createProjectAction(companyId: string, _prev: FormState, f
 export async function updateProjectAction(projectId: string, _prev: FormState, formData: FormData): Promise<FormState> {
   const me = await getActionUser(["MANAGER"]);
   if (!me) return { ok: false, error: "unauthorized" };
-  const parsed = updateSchema.safeParse({ nameEn: formData.get("nameEn"), nameAr: formData.get("nameAr") });
+  const parsed = updateSchema.safeParse({ code: formData.get("code"), nameEn: formData.get("nameEn"), nameAr: formData.get("nameAr") });
   if (!parsed.success) return { ok: false, error: "invalid" };
+  const current = await prisma.project.findUnique({ where: { id: projectId }, select: { companyId: true } });
+  if (!current) return { ok: false, error: "notFound" };
+  const clash = await prisma.project.findFirst({ where: { companyId: current.companyId, code: parsed.data.code, id: { not: projectId } } });
+  if (clash) return { ok: false, error: "codeTaken" };
   await prisma.project.update({ where: { id: projectId }, data: parsed.data });
   await audit(me.id, "project.update", "Project", projectId, parsed.data);
   refresh();

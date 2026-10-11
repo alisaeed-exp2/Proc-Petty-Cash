@@ -1,4 +1,4 @@
-import { GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 
 let client: S3Client | null = null;
 
@@ -45,4 +45,9 @@ export async function getObject(key: string) {
     contentType: res.ContentType ?? "application/octet-stream",
     length: res.ContentLength,
   };
+}
+
+export async function deleteObject(key: string): Promise<void> {
+  const { s3, bucket } = getClient();
+  await s3.send(new DeleteObjectCommand({ Bucket: bucket, Key: key }));
 }

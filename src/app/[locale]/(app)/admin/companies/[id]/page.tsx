@@ -45,6 +45,10 @@ export default async function CompanyDetailPage({ params }: { params: Promise<{ 
         <Card title={t("companies.edit")}>
           <ActionForm action={updateCompanyAction.bind(null, company.id)} namespace="admin.companies" submit={c("save")}>
             <div>
+              <label className={labelCls} htmlFor="e-code">{t("companies.code")}</label>
+              <input id="e-code" name="code" required maxLength={20} defaultValue={company.code} dir="ltr" className={`${inputCls} text-start`} />
+            </div>
+            <div>
               <label className={labelCls} htmlFor="e-en">{t("companies.nameEn")}</label>
               <input id="e-en" name="nameEn" required defaultValue={company.nameEn} dir="ltr" className={`${inputCls} text-start`} />
             </div>
@@ -91,17 +95,20 @@ export default async function CompanyDetailPage({ params }: { params: Promise<{ 
           <ul className="divide-y divide-line">
             {company.projects.map((p) => (
               <li key={p.id} className="flex flex-col gap-3 py-4 lg:flex-row lg:items-start lg:justify-between">
-                <div className="flex items-center gap-3 lg:w-48">
-                  <span className="num font-medium">{p.code}</span>
+                <div className="flex items-center gap-3 lg:w-28">
                   <Badge tone={p.active ? "APPROVED" : "DRAFT"}>{p.active ? c("active") : c("inactive")}</Badge>
                 </div>
                 <ActionForm
                   action={updateProjectAction.bind(null, p.id)}
                   namespace="admin.companies"
                   submit={c("save")}
-                  className="grid flex-1 gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end"
+                  className="grid flex-1 gap-3 sm:grid-cols-[8rem_1fr_1fr_auto] sm:items-end"
                   buttonClassName={small}
                 >
+                  <div>
+                    <label className="text-xs text-muted" htmlFor={`pc-${p.id}`}>{t("companies.code")}</label>
+                    <input id={`pc-${p.id}`} name="code" required maxLength={20} defaultValue={p.code} dir="ltr" className={`${inputCls} text-start`} />
+                  </div>
                   <div>
                     <label className="text-xs text-muted" htmlFor={`pe-${p.id}`}>{t("companies.nameEn")}</label>
                     <input id={`pe-${p.id}`} name="nameEn" required defaultValue={p.nameEn} dir="ltr" className={`${inputCls} text-start`} />
