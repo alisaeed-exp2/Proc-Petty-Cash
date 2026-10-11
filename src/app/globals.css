@@ -1,0 +1,61 @@
+@import "tailwindcss";
+
+/*
+ * Theme tokens: the ONLY place brand colours, radius and fonts live.
+ * Values are estimated from the reference login screen; replace with the
+ * official brand hex codes when available.
+ */
+@theme {
+  --color-brand-900: #17303d;
+  --color-brand-800: #1f3a4a;
+  --color-brand-700: #2b4b5e;
+  --color-brand-600: #3f5f73;
+  --color-brand-500: #56788d;
+  --color-brand-100: #dfe7ec;
+
+  --color-gold-500: #c9a96a;
+  --color-gold-400: #d6bc8a;
+  --color-gold-200: #ece0c6;
+
+  --color-cream-50: #fdfbf7;
+  --color-cream-100: #faf7f0;
+  --color-cream-200: #f0ebdf;
+
+  --color-ink: #1b2a33;
+  --color-muted: #5d6f7a;
+  --color-line: #e3ddcf;
+
+  /* Status colours stay separate from brand colours on purpose. */
+  --color-status-approved: #2f7d5b;
+  --color-status-pending: #b7791f;
+  --color-status-rejected: #b83a3a;
+  --color-status-flag: #8a4fb0;
+
+  --radius-control: 0.625rem;
+  --radius-card: 1rem;
+
+  --font-sans: var(--font-latin), var(--font-arabic), system-ui, sans-serif;
+  --font-display: var(--font-display-latin), var(--font-arabic), Georgia, serif;
+}
+
+:root {
+  color-scheme: light;
+}
+
+html[dir="rtl"] body {
+  font-family: var(--font-arabic), var(--font-latin), system-ui, sans-serif;
+}
+
+body {
+  background: var(--color-cream-100);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Money and ids stay left-to-right and tabular inside RTL pages. */
+.num {
+  direction: ltr;
+  unicode-bidi: isolate;
+  font-variant-numeric: tabular-nums;
+}

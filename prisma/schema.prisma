@@ -1,0 +1,237 @@
+// AKCC Petty Cash Management - data model.
+// Money is ALWAYS stored as integer halalas (1 SAR = 100 halalas). Never floats.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  MANAGER
+  CONTROLLER
+  AGENT
+}
+
+enum Locale {
+  en
+  ar
+}
+
+enum ExpenseStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REJECTED
+}
+
+enum ReviewDecision {
+  APPROVED
+  REJECTED
+}
+
+enum LedgerType {
+  FUNDING
+  ALLOCATION
+  RETURN
+  EXPENSE
+  ADJUSTMENT
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         Role
+  locale       Locale   @default(en)
+  active       Boolean  @default(true)
+  // Optional: restrict a controller to one company later. Null = all companies.
+  scopeCompanyId String?
+  scopeCompany   Company? @relation("UserScope", fields: [scopeCompanyId], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  expenses          Expense[]       @relation("ExpenseAgent")
+  reviews           ExpenseReview[]
+  allocationsIn     Allocation[]    @relation("AllocationAgent")
+  allocationsMade   Allocation[]    @relation("AllocationManager")
+  returns           CashReturn[]    @relation("ReturnAgent")
+  returnsReceived   CashReturn[]    @relation("ReturnManager")
+  fundingsRecorded  Funding[]
+  ledgerEntries     LedgerEntry[]
+  auditLogs         AuditLog[]
+}
+
+model Company {
+  id       String  @id @default(cuid())
+  code     String  @unique
+  nameEn   String
+  nameAr   String
+  active   Boolean @default(true)
+
+  projects Project[]
+  expenses Expense[]
+  scopedUsers User[] @relation("UserScope")
+}
+
+model Project {
+  id        String  @id @default(cuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+  code      String
+  nameEn    String
+  nameAr    String
+  active    Boolean @default(true)
+
+  expenses Expense[]
+
+  @@unique([companyId, code])
+}
+
+// Money received from Finance by the procurement manager.
+model Funding {
+  id         String   @id @default(cuid())
+  amount     Int
+  receivedAt DateTime
+  reference  String? // finance voucher / transfer reference
+  notes      String?
+  recordedById String
+  recordedBy   User     @relation(fields: [recordedById], references: [id])
+  createdAt  DateTime @default(now())
+}
+
+// Manager -> agent.
+model Allocation {
+  id        String   @id @default(cuid())
+  agentId   String
+  agent     User     @relation("AllocationAgent", fields: [agentId], references: [id])
+  managerId String
+  manager   User     @relation("AllocationManager", fields: [managerId], references: [id])
+  amount    Int
+  allocatedAt DateTime
+  notes     String?
+  createdAt DateTime @default(now())
+
+  @@index([agentId])
+}
+
+// Agent -> manager (unspent cash handed back; goes back into the unallocated pool).
+model CashReturn {
+  id        String   @id @default(cuid())
+  agentId   String
+  agent     User     @relation("ReturnAgent", fields: [agentId], references: [id])
+  managerId String
+  manager   User     @relation("ReturnManager", fields: [managerId], references: [id])
+  amount    Int
+  returnedAt DateTime
+  notes     String?
+  createdAt DateTime @default(now())
+
+  @@index([agentId])
+}
+
+model Expense {
+  id        String        @id @default(cuid())
+  agentId   String
+  agent     User          @relation("ExpenseAgent", fields: [agentId], references: [id])
+  companyId String
+  company   Company       @relation(fields: [companyId], references: [id])
+  projectId String?
+  project   Project?      @relation(fields: [projectId], references: [id])
+  status    ExpenseStatus @default(DRAFT)
+
+  vendorName    String?
+  vendorVatNo   String? // 15 digits for Saudi VAT-registered sellers
+  invoiceNumber String?
+  invoiceDate   DateTime? // always normalised to Gregorian
+  subtotal      Int?
+  vatAmount     Int?
+  total         Int?
+
+  overspendFlag  Boolean @default(false) // exceeded available balance at submission
+  duplicateFlag  Boolean @default(false) // same VAT no + invoice no + total seen before
+  zatcaDecoded   Boolean @default(false) // fields came from the ZATCA QR code
+  ocrRaw         Json? // raw model / QR output, kept for traceability
+
+  submittedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  files   ExpenseFile[]
+  reviews ExpenseReview[]
+  ledger  LedgerEntry[]
+
+  @@index([agentId, status])
+  @@index([status, submittedAt])
+  @@index([vendorVatNo, invoiceNumber, total])
+}
+
+// Original uploads are kept forever; resubmissions add new versions, nothing is overwritten.
+model ExpenseFile {
+  id         String   @id @default(cuid())
+  expenseId  String
+  expense    Expense  @relation(fields: [expenseId], references: [id])
+  storageKey String
+  fileName   String
+  mimeType   String
+  sizeBytes  Int
+  sha256     String
+  version    Int      @default(1)
+  uploadedAt DateTime @default(now())
+
+  @@index([sha256])
+  @@index([expenseId])
+}
+
+model ExpenseReview {
+  id         String         @id @default(cuid())
+  expenseId  String
+  expense    Expense        @relation(fields: [expenseId], references: [id])
+  reviewerId String
+  reviewer   User           @relation(fields: [reviewerId], references: [id])
+  decision   ReviewDecision
+  reason     String? // required when rejecting (enforced in code)
+  createdAt  DateTime       @default(now())
+
+  @@index([expenseId])
+}
+
+// Append-only. Balances are computed from here, never edited by hand.
+// EXPENSE rows are only created when an expense is approved.
+// ADJUSTMENT amount is signed and changes the agent's consumed figure.
+model LedgerEntry {
+  id         String     @id @default(cuid())
+  type       LedgerType
+  agentId    String? // null for FUNDING
+  agent      User?      @relation(fields: [agentId], references: [id])
+  amount     Int
+  occurredAt DateTime
+  expenseId  String?
+  expense    Expense?   @relation(fields: [expenseId], references: [id])
+  // Source record (Funding / Allocation / CashReturn id) for traceability.
+  sourceId   String?
+  note       String?
+  createdAt  DateTime   @default(now())
+
+  @@index([agentId, type])
+  @@index([type, occurredAt])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  actor     User?    @relation(fields: [actorId], references: [id])
+  action    String
+  entity    String
+  entityId  String?
+  details   Json?
+  createdAt DateTime @default(now())
+
+  @@index([entity, entityId])
+  @@index([createdAt])
+}
