@@ -40,14 +40,15 @@ export default async function EditUserPage({ params }: { params: Promise<{ local
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className={labelCls} htmlFor="u-role">{t("users.role")}</label>
-                <select id="u-role" name="role" defaultValue={u.role} disabled={u.id === me.id} className={inputCls}>
+                <select id="u-role" name="role" defaultValue={u.role} disabled={u.id === me.id && me.role !== "SYSTEM_ADMIN"} className={inputCls}>
                   <option value="AGENT">{roles("AGENT")}</option>
                   <option value="CONTROLLER">{roles("CONTROLLER")}</option>
                   <option value="MANAGER">{roles("MANAGER")}</option>
                   <option value="GROUP_VP">{roles("GROUP_VP")}</option>
                   <option value="SYSTEM_ADMIN">{roles("SYSTEM_ADMIN")}</option>
                 </select>
-                {u.id === me.id && <input type="hidden" name="role" value={u.role} />}
+                {u.id === me.id && me.role !== "SYSTEM_ADMIN" && <input type="hidden" name="role" value={u.role} />}
+                {me.role === "SYSTEM_ADMIN" && <p className="mt-1 text-xs text-muted">{t("users.adminRoleNote")}</p>}
               </div>
               <div>
                 <label className={labelCls} htmlFor="u-locale">{t("users.language")}</label>

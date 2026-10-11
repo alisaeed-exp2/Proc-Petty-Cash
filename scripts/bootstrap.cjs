@@ -16,6 +16,19 @@ function run(cmd) {
 async function main() {
   run("npx prisma db push --skip-generate");
 
+  // One-off promotion: set PROMOTE_TO_SYSTEM_ADMIN=<email> for a deploy, then remove it.
+  // Equivalent to: UPDATE "User" SET role = 'SYSTEM_ADMIN' WHERE email = '<email>';
+  const promote = (process.env.PROMOTE_TO_SYSTEM_ADMIN || "").trim().toLowerCase();
+  if (promote) {
+    const db = new PrismaClient();
+    try {
+      const res = await db.user.updateMany({ where: { email: promote }, data: { role: "SYSTEM_ADMIN" } });
+      console.log(res.count ? "Promoted to SYSTEM_ADMIN: " + promote : "No user found to promote: " + promote);
+    } finally {
+      await db.$disconnect();
+    }
+  }
+
   const email = (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
   const password = process.env.ADMIN_INITIAL_PASSWORD;
   if (!email || !password) {

@@ -102,14 +102,20 @@ export async function updateUserAction(userId: string, _prev: FormState, formDat
     if (other) return { ok: false, error: "emailTaken" };
   }
   if (data.role !== target.role) {
-    if (me.id === userId) return { ok: false, error: "selfRole" };
-    // A role change would orphan cash and invoices tied to the old role.
-    const [ledger, expenses, reviews] = await Promise.all([
-      prisma.ledgerEntry.count({ where: { agentId: userId } }),
-      prisma.expense.count({ where: { agentId: userId } }),
-      prisma.expenseReview.count({ where: { reviewerId: userId } }),
-    ]);
-    if (ledger + expenses + reviews > 0) return { ok: false, error: "roleLocked" };
+    if (me.role !== "SYSTEM_ADMIN") {
+      if (me.id === userId) return { ok: false, error: "selfRole" };
+      // A role change would orphan cash and invoices tied to the old role.
+      const [ledger, expenses, reviews] = await Promise.all([
+        prisma.ledgerEntry.count({ where: { agentId: userId } }),
+        prisma.expense.count({ where: { agentId: userId } }),
+        prisma.expenseReview.count({ where: { reviewerId: userId } }),
+      ]);
+      if (ledger + expenses + reviews > 0) return { ok: false, error: "roleLocked" };
+    } else if (target.role === "SYSTEM_ADMIN") {
+      // Never leave the system without an active administrator.
+      const others = await prisma.user.count({ where: { role: "SYSTEM_ADMIN", active: true, id: { not: userId } } });
+      if (others === 0) return { ok: false, error: "lastAdmin" };
+    }
   }
 
   await prisma.user.update({ where: { id: userId }, data });

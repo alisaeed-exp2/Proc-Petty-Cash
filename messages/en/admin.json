@@ -25,11 +25,13 @@
         "selfDeactivate": "You cannot deactivate your own account.",
         "selfRole": "You cannot change your own role.",
         "roleLocked": "This user already has cash or invoices on record, so the role cannot be changed. Deactivate the account and create a new one instead.",
-        "adminOnly": "Only a System Administrator can change a System Administrator account."
+        "adminOnly": "Only a System Administrator can change a System Administrator account.",
+        "lastAdmin": "This is the only active System Administrator, so its role cannot be changed."
       },
       "edit": "Edit user",
       "editSubtitle": "Change name, email, role or language.",
-      "save": "Save changes"
+      "save": "Save changes",
+      "adminRoleNote": "As System Administrator you can change any role. Existing cash and invoices stay with the user."
     },
     "companies": {
       "title": "Companies & projects",
