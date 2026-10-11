@@ -1,1 +1,59 @@
-{}
+{
+  "admin": {
+    "users": {
+      "title": "Users",
+      "subtitle": "Create accounts for agents, controllers and managers.",
+      "role": "Role",
+      "language": "Language",
+      "created": "Created",
+      "mustChange": "Must choose a new password",
+      "new": "New user",
+      "reset": "Reset password",
+      "deactivate": "Deactivate",
+      "activate": "Activate",
+      "tempNote": "A temporary password is generated and shown once. The user must choose their own at first sign-in.",
+      "info": {
+        "created": "User created. Share these sign-in details securely:",
+        "reset": "Password reset. Share these sign-in details securely:"
+      },
+      "errors": {
+        "unauthorized": "You are not allowed to do that.",
+        "invalid": "Please check the name and email.",
+        "emailTaken": "A user with this email already exists.",
+        "notFound": "User not found.",
+        "selfDeactivate": "You cannot deactivate your own account."
+      }
+    },
+    "companies": {
+      "title": "Companies & projects",
+      "subtitle": "The group's companies and their projects or initiatives. Agents pick one when uploading an invoice.",
+      "empty": "No companies yet. Add the first one.",
+      "code": "Code",
+      "projects": "Projects",
+      "manage": "Manage",
+      "new": "New company",
+      "nameEn": "Name (English)",
+      "nameAr": "Name (Arabic)",
+      "edit": "Company details",
+      "detailSubtitle": "Edit the company and manage its projects.",
+      "deactivate": "Deactivate",
+      "activate": "Activate",
+      "deactivateNote": "Inactive companies and projects stay in reports but cannot be chosen for new expenses.",
+      "info": {
+        "created": "Created.",
+        "saved": "Saved."
+      },
+      "errors": {
+        "unauthorized": "You are not allowed to do that.",
+        "invalid": "Please fill in the code and both names (code: letters, digits, - or _).",
+        "codeTaken": "This code is already in use.",
+        "notFound": "Not found."
+      }
+    },
+    "projects": {
+      "title": "Projects",
+      "new": "New project",
+      "empty": "No projects yet. Projects are optional when an agent uploads an invoice."
+    }
+  }
+}
