@@ -1,0 +1,21 @@
+{
+  "nav": {
+    "menu": "Main menu",
+    "dashboard": "Dashboard",
+    "newExpense": "New expense",
+    "myExpenses": "My expenses",
+    "review": "Review queue",
+    "funding": "Funding",
+    "allocations": "Allocations & returns",
+    "consumption": "Consumption history",
+    "reports": "Reports",
+    "users": "Users",
+    "companies": "Companies & projects",
+    "account": "Change password"
+  },
+  "roles": {
+    "MANAGER": "Procurement Manager",
+    "CONTROLLER": "Expense Controller",
+    "AGENT": "Purchase Agent"
+  }
+}

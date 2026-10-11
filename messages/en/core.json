@@ -1,0 +1,102 @@
+{
+  "brand": {
+    "company": "Al Khalejiah Catering Company",
+    "product": "AKCC Petty Cash Management"
+  },
+  "common": {
+    "language": "العربية",
+    "signOut": "Sign out",
+    "save": "Save",
+    "saving": "Saving…",
+    "cancel": "Cancel",
+    "create": "Create",
+    "edit": "Edit",
+    "delete": "Delete",
+    "back": "Back",
+    "search": "Search",
+    "filter": "Filter",
+    "reset": "Reset",
+    "export": "Export to Excel",
+    "yes": "Yes",
+    "no": "No",
+    "none": "None",
+    "all": "All",
+    "actions": "Actions",
+    "status": "Status",
+    "date": "Date",
+    "amount": "Amount",
+    "total": "Total",
+    "notes": "Notes",
+    "name": "Name",
+    "email": "Email",
+    "company": "Company",
+    "project": "Project",
+    "agent": "Agent",
+    "currency": "SAR",
+    "optional": "optional",
+    "from": "From",
+    "to": "To",
+    "view": "View",
+    "open": "Open",
+    "active": "Active",
+    "inactive": "Inactive",
+    "saved": "Saved.",
+    "nothing": "Nothing to show yet.",
+    "required": "Please fill in the required fields.",
+    "unauthorized": "You are not allowed to do that.",
+    "failed": "Something went wrong. Please try again."
+  },
+  "login": {
+    "headline": "Every riyal accounted for, from funding to invoice",
+    "subheadline": "One workspace for petty cash: funding, agent allocations, invoices, approvals and reports.",
+    "features": {
+      "files": {
+        "title": "Every invoice kept with its original file",
+        "body": "PDFs and photos are stored permanently, so any figure can be traced back to the paper behind it."
+      },
+      "balance": {
+        "title": "Each agent sees their own balance",
+        "body": "Allocated, spent, pending and remaining cash at a glance, with no spreadsheets sent around."
+      },
+      "approval": {
+        "title": "Approved before it is recorded",
+        "body": "An expense controller reviews every invoice, and only approved amounts reach the consumption history."
+      }
+    },
+    "welcome": "Welcome back",
+    "welcomeBody": "Sign in to your petty cash workspace.",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Sign in",
+    "submitting": "Signing in…",
+    "forgot": "Forgotten your password?",
+    "invalid": "The email or password is incorrect.",
+    "required": "Please enter your email and password."
+  },
+  "forgot": {
+    "title": "Reset your password",
+    "body": "Password reset by email will be available soon. For now, please ask the procurement manager to reset it for you.",
+    "back": "Back to sign in"
+  },
+  "account": {
+    "title": "Change password",
+    "forced": "For your security, please choose your own password before continuing.",
+    "current": "Current password",
+    "next": "New password",
+    "confirm": "Confirm new password",
+    "rules": "At least 10 characters, with letters and numbers.",
+    "save": "Update password",
+    "saving": "Updating…",
+    "done": "Your password was updated.",
+    "continue": "Continue",
+    "back": "Back to dashboard",
+    "errors": {
+      "unauthorized": "Please sign in again.",
+      "tooShort": "The new password must be at least 10 characters.",
+      "mismatch": "The two new passwords do not match.",
+      "same": "The new password must be different from the current one.",
+      "weak": "Use both letters and numbers.",
+      "wrongCurrent": "The current password is incorrect."
+    }
+  }
+}

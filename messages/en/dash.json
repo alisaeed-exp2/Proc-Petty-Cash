@@ -1,0 +1,7 @@
+{
+  "dash": {
+    "title": "Dashboard",
+    "welcome": "Welcome, {name}",
+    "soon": "Your dashboard is being prepared."
+  }
+}

@@ -27,7 +27,12 @@ async function main() {
   try {
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) {
-      console.log("Admin user already exists, leaving it unchanged: " + email);
+      // Until the admin has chosen their own password, force a change on next sign-in.
+      const forced = await prisma.user.updateMany({
+        where: { email, passwordChangedAt: null, mustChangePassword: false },
+        data: { mustChangePassword: true },
+      });
+      console.log("Admin user already exists, leaving it unchanged: " + email + (forced.count ? " (password change required at next sign-in)" : ""));
       return;
     }
     const passwordHash = await bcrypt.hash(password, 12);
@@ -38,6 +43,7 @@ async function main() {
         passwordHash,
         role: "MANAGER",
         locale: "en",
+        mustChangePassword: true,
       },
     });
     console.log("Created admin user: " + email);
