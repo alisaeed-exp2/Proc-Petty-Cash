@@ -39,3 +39,13 @@ Tests (no install needed beyond Node 22): `npm test`
 ## Branding
 
 Replace `public/logo-monogram.png`, `src/components/brand-logo.tsx` and the colour tokens in `globals.css` when the official identity arrives. Nothing else hard-codes brand values.
+
+## Deploy on Railway
+
+1. New Project -> Deploy from GitHub repo -> `alisaeed-exp2/Proc-Petty-Cash`; add a **PostgreSQL** service in the same project.
+2. On the web service, set variables: `DATABASE_URL` = `${{Postgres.DATABASE_URL}}`, `DIRECT_URL` = `${{Postgres.DATABASE_URL}}`, `AUTH_SECRET` (long random string), `AUTH_TRUST_HOST` = `true`.
+3. Generate the first migration locally (needs the Postgres public URL) and commit `prisma/migrations`:
+   `DATABASE_URL=<public url> DIRECT_URL=<public url> npx prisma migrate dev --name init`
+4. `railway.json` runs `prisma migrate deploy` before each release and health-checks `/en/login`.
+5. Seed users once: `DATABASE_URL=<public url> SEED_PASSWORD=<strong password> npm run db:seed`.
+6. Service -> Settings -> Networking -> Generate Domain.
