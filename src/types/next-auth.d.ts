@@ -1,6 +1,6 @@
 import type { DefaultSession } from "next-auth";
 
-type AppRole = "MANAGER" | "CONTROLLER" | "AGENT";
+type AppRole = "SYSTEM_ADMIN" | "GROUP_VP" | "MANAGER" | "CONTROLLER" | "AGENT";
 type AppLocale = "en" | "ar";
 
 declare module "next-auth" {

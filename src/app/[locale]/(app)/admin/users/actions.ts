@@ -12,7 +12,7 @@ import type { FormState } from "@/components/action-form";
 const createSchema = z.object({
   name: z.string().trim().min(2).max(120),
   email: z.string().trim().toLowerCase().email().max(200),
-  role: z.enum(["MANAGER", "CONTROLLER", "AGENT"]),
+  role: z.enum(["SYSTEM_ADMIN", "GROUP_VP", "MANAGER", "CONTROLLER", "AGENT"]),
   locale: z.enum(["en", "ar"]),
 });
 
@@ -43,8 +43,9 @@ export async function createUserAction(_prev: FormState, formData: FormData): Pr
 export async function resetPasswordAction(userId: string, _prev: FormState, _formData: FormData): Promise<FormState> {
   const me = await getActionUser(["MANAGER"]);
   if (!me) return { ok: false, error: "unauthorized" };
-  const target = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, email: true } });
+  const target = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, email: true, role: true } });
   if (!target) return { ok: false, error: "notFound" };
+  if (target.role === "SYSTEM_ADMIN" && me.role !== "SYSTEM_ADMIN") return { ok: false, error: "adminOnly" };
 
   const temp = generateTempPassword();
   await prisma.user.update({
@@ -59,8 +60,9 @@ export async function toggleUserActiveAction(userId: string, _prev: FormState, _
   const me = await getActionUser(["MANAGER"]);
   if (!me) return { ok: false, error: "unauthorized" };
   if (me.id === userId) return { ok: false, error: "selfDeactivate" };
-  const target = await prisma.user.findUnique({ where: { id: userId }, select: { active: true } });
+  const target = await prisma.user.findUnique({ where: { id: userId }, select: { active: true, role: true } });
   if (!target) return { ok: false, error: "notFound" };
+  if (target.role === "SYSTEM_ADMIN" && me.role !== "SYSTEM_ADMIN") return { ok: false, error: "adminOnly" };
 
   await prisma.user.update({ where: { id: userId }, data: { active: !target.active } });
   await audit(me.id, target.active ? "user.deactivate" : "user.activate", "User", userId);
@@ -71,7 +73,7 @@ export async function toggleUserActiveAction(userId: string, _prev: FormState, _
 const updateSchema = z.object({
   name: z.string().trim().min(2).max(120),
   email: z.string().trim().toLowerCase().email().max(200),
-  role: z.enum(["MANAGER", "CONTROLLER", "AGENT"]),
+  role: z.enum(["SYSTEM_ADMIN", "GROUP_VP", "MANAGER", "CONTROLLER", "AGENT"]),
   locale: z.enum(["en", "ar"]),
 });
 
@@ -89,6 +91,11 @@ export async function updateUserAction(userId: string, _prev: FormState, formDat
 
   const target = await prisma.user.findUnique({ where: { id: userId } });
   if (!target) return { ok: false, error: "notFound" };
+  // Only a system administrator may change another system administrator or promote someone to it.
+  if ((target.role === "SYSTEM_ADMIN" || data.role === "SYSTEM_ADMIN") && me.role !== "SYSTEM_ADMIN" && data.role !== target.role) {
+    return { ok: false, error: "adminOnly" };
+  }
+  if (target.role === "SYSTEM_ADMIN" && me.role !== "SYSTEM_ADMIN") return { ok: false, error: "adminOnly" };
 
   if (data.email !== target.email) {
     const other = await prisma.user.findUnique({ where: { email: data.email } });

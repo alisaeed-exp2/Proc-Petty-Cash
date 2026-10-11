@@ -22,7 +22,8 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
     <>
       <PageHeader title={t("title")} subtitle={t("welcome", { name: user.name })} />
       {user.role === "AGENT" && <AgentDashboard user={user} locale={locale} t={t} c={c} />}
-      {user.role === "MANAGER" && <ManagerDashboard locale={locale} t={t} c={c} />}
+      {(user.role === "MANAGER" || user.role === "SYSTEM_ADMIN") && <ManagerDashboard locale={locale} t={t} c={c} />}
+      {user.role === "GROUP_VP" && <ManagerDashboard locale={locale} t={t} c={c} readOnly />}
       {user.role === "CONTROLLER" && <ControllerDashboard locale={locale} t={t} c={c} />}
     </>
   );
@@ -116,7 +117,7 @@ async function AgentDashboard({ user, locale, t, c }: { user: AppUser; locale: s
   );
 }
 
-async function ManagerDashboard({ locale, t, c }: { locale: string; t: T; c: T }) {
+async function ManagerDashboard({ locale, t, c, readOnly = false }: { locale: string; t: T; c: T; readOnly?: boolean }) {
   const [summary, agents, pendingFlags, awaitingMe, byCompany, companies, expenseEntries] = await Promise.all([
     getManagerSummary(),
     getAllAgentBalances(),
@@ -152,7 +153,7 @@ async function ManagerDashboard({ locale, t, c }: { locale: string; t: T; c: T }
 
   return (
     <>
-      {awaitingMe > 0 && (
+      {!readOnly && awaitingMe > 0 && (
         <div className="mb-4">
           <Notice tone="info">
             {t("manager.awaitingNote", { count: awaitingMe })}{" "}
@@ -188,7 +189,7 @@ async function ManagerDashboard({ locale, t, c }: { locale: string; t: T; c: T }
       <Card
         title={t("manager.byAgent")}
         className="mt-6"
-        actions={<Link href="/allocations" className={btnSecondary}>{t("manager.manage")}</Link>}
+        actions={readOnly ? undefined : <Link href="/allocations" className={btnSecondary}>{t("manager.manage")}</Link>}
       >
         {agents.length === 0 ? (
           <Empty>{t("manager.noAgents")}</Empty>

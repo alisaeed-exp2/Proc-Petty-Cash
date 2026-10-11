@@ -9,7 +9,7 @@ import { BulkQueue } from "@/components/bulk-queue";
 import { Link } from "@/i18n/navigation";
 import { bulkApproveAction } from "./actions";
 
-const DONE = ["rejected", "forwarded", "finalApproved", "bulkForwarded", "bulkFinal"] as const;
+const DONE = ["rejected", "approved", "bulk"] as const;
 
 export default async function ReviewQueuePage({
   params,
@@ -24,11 +24,15 @@ export default async function ReviewQueuePage({
   const me = await requireUser(locale, ["CONTROLLER", "MANAGER"]);
   const t = await getTranslations("review");
   const isManager = me.role === "MANAGER";
+  const isAdmin = me.role === "SYSTEM_ADMIN";
 
   const flagWhere =
     filter === "overspend" ? { overspendFlag: true } : filter === "duplicate" ? { duplicateFlag: true } : {};
   const items = await prisma.expense.findMany({
-    where: { status: isManager ? "CONTROLLER_APPROVED" : "SUBMITTED", ...flagWhere },
+    where: {
+      status: isAdmin ? { in: ["SUBMITTED", "CONTROLLER_APPROVED"] } : isManager ? "CONTROLLER_APPROVED" : "SUBMITTED",
+      ...flagWhere,
+    },
     orderBy: { submittedAt: "asc" },
     include: {
       agent: { select: { name: true } },
@@ -47,7 +51,7 @@ export default async function ReviewQueuePage({
 
   return (
     <>
-      <PageHeader title={isManager ? t("titleManager") : t("title")} subtitle={isManager ? t("subtitleManager") : t("subtitle")} />
+      <PageHeader title={isManager ? t("titleManager") : isAdmin ? t("titleAdmin") : t("title")} subtitle={isManager ? t("subtitleManager") : isAdmin ? t("subtitleAdmin") : t("subtitle")} />
       {doneKey && (
         <div className="mb-4">
           <Notice tone="good">{t(`done.${doneKey}`, { n: n ?? "0", skipped: skipped ?? "0" })}</Notice>
@@ -77,7 +81,7 @@ export default async function ReviewQueuePage({
           <BulkQueue
             action={bulkApproveAction}
             locale={locale}
-            showApprover={isManager}
+            showApprover={isManager || isAdmin}
             rows={items.map((e) => ({
               id: e.id,
               submitted: formatDateTime(e.submittedAt, locale),

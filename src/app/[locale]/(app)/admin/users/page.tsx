@@ -92,6 +92,8 @@ export default async function UsersPage({ params }: { params: Promise<{ locale: 
                   <option value="AGENT">{roles("AGENT")}</option>
                   <option value="CONTROLLER">{roles("CONTROLLER")}</option>
                   <option value="MANAGER">{roles("MANAGER")}</option>
+                  <option value="GROUP_VP">{roles("GROUP_VP")}</option>
+                  <option value="SYSTEM_ADMIN">{roles("SYSTEM_ADMIN")}</option>
                 </select>
               </div>
               <div>

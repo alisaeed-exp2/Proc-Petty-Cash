@@ -44,6 +44,8 @@ export default async function EditUserPage({ params }: { params: Promise<{ local
                   <option value="AGENT">{roles("AGENT")}</option>
                   <option value="CONTROLLER">{roles("CONTROLLER")}</option>
                   <option value="MANAGER">{roles("MANAGER")}</option>
+                  <option value="GROUP_VP">{roles("GROUP_VP")}</option>
+                  <option value="SYSTEM_ADMIN">{roles("SYSTEM_ADMIN")}</option>
                 </select>
                 {u.id === me.id && <input type="hidden" name="role" value={u.role} />}
               </div>

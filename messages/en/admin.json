@@ -24,7 +24,8 @@
         "notFound": "User not found.",
         "selfDeactivate": "You cannot deactivate your own account.",
         "selfRole": "You cannot change your own role.",
-        "roleLocked": "This user already has cash or invoices on record, so the role cannot be changed. Deactivate the account and create a new one instead."
+        "roleLocked": "This user already has cash or invoices on record, so the role cannot be changed. Deactivate the account and create a new one instead.",
+        "adminOnly": "Only a System Administrator can change a System Administrator account."
       },
       "edit": "Edit user",
       "editSubtitle": "Change name, email, role or language.",

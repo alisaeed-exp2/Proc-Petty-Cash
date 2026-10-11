@@ -1,4 +1,5 @@
 import type { Role } from "@prisma/client";
+import { roleAllowed } from "@/lib/access";
 
 export type NavItem = {
   href: string;
@@ -8,9 +9,10 @@ export type NavItem = {
 };
 
 const ALL: Role[] = ["MANAGER", "CONTROLLER", "AGENT"];
+const WITH_VP: Role[] = ["MANAGER", "CONTROLLER", "AGENT", "GROUP_VP"];
 
 export const NAV_ITEMS: NavItem[] = [
-  { href: "/dashboard", key: "dashboard", roles: ALL, icon: "M3 13h8V3H3v10Zm10 8h8V11h-8v10ZM3 21h8v-6H3v6Zm10-12h8V3h-8v6Z" },
+  { href: "/dashboard", key: "dashboard", roles: WITH_VP, icon: "M3 13h8V3H3v10Zm10 8h8V11h-8v10ZM3 21h8v-6H3v6Zm10-12h8V3h-8v6Z" },
   { href: "/expenses/new", key: "newExpense", roles: ["AGENT"], icon: "M12 5v14M5 12h14" },
   { href: "/expenses", key: "myExpenses", roles: ["AGENT"], icon: "M7 3h7l5 5v13H7V3Zm7 0v5h5M10 13h6M10 17h6" },
   { href: "/review", key: "review", roles: ["CONTROLLER", "MANAGER"], icon: "M12 3l8 3v6c0 4.5-3.2 8-8 9-4.8-1-8-4.5-8-9V6l8-3Zm-3 9 2.2 2.2L15.5 10" },
@@ -23,5 +25,5 @@ export const NAV_ITEMS: NavItem[] = [
 ];
 
 export function navFor(role: Role): NavItem[] {
-  return NAV_ITEMS.filter((n) => n.roles.includes(role));
+  return NAV_ITEMS.filter((n) => n.roles.some((r) => (role === "SYSTEM_ADMIN" ? roleAllowed(role, [r]) : r === role)));
 }

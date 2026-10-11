@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { getCurrentUser } from "@/lib/session";
 import { REPORTS, buildReport, type Cell, type ReportKey } from "@/lib/reports";
 import { formatDate } from "@/lib/format";
+import { canSeeRecords } from "@/lib/access";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -13,6 +14,8 @@ const OFFWHITE = "FFE9E3DB";
 export async function GET(req: Request, { params }: { params: Promise<{ report: string }> }) {
   const user = await getCurrentUser();
   if (!user || user.mustChangePassword) return new Response("Unauthorized", { status: 401 });
+
+  if (!canSeeRecords(user.role)) return new Response("Forbidden", { status: 403 });
 
   const { report } = await params;
   if (!(REPORTS as readonly string[]).includes(report)) return new Response("Not found", { status: 404 });

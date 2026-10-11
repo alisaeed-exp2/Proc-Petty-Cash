@@ -16,18 +16,22 @@ import type { FormState } from "@/components/action-form";
  * Either reviewer can reject at their own step, which sends it back to the agent as REJECTED.
  * Only the final approval writes the EXPENSE ledger entry.
  */
-function stepFor(me: AppUser): { stage: ReviewStage; from: ExpenseStatus; approvedTo: ExpenseStatus } {
-  return me.role === "MANAGER"
-    ? { stage: "MANAGER", from: "CONTROLLER_APPROVED", approvedTo: "APPROVED" }
-    : { stage: "CONTROLLER", from: "SUBMITTED", approvedTo: "CONTROLLER_APPROVED" };
+function stepFor(me: AppUser, status: ExpenseStatus): { stage: ReviewStage; from: ExpenseStatus; approvedTo: ExpenseStatus } | null {
+  const asManager = { stage: "MANAGER", from: "CONTROLLER_APPROVED", approvedTo: "APPROVED" } as const;
+  const asController = { stage: "CONTROLLER", from: "SUBMITTED", approvedTo: "CONTROLLER_APPROVED" } as const;
+  if (me.role === "MANAGER") return asManager;
+  if (me.role === "CONTROLLER") return asController;
+  // A system administrator may act at whichever step the expense is waiting at.
+  if (me.role === "SYSTEM_ADMIN") return status === "CONTROLLER_APPROVED" ? asManager : status === "SUBMITTED" ? asController : null;
+  return null;
 }
 
 /** Returns an error key, or null on success. */
 async function decideOne(me: AppUser, expenseId: string, approve: boolean, reason: string): Promise<string | null> {
-  const step = stepFor(me);
   const expense = await prisma.expense.findUnique({ where: { id: expenseId } });
   if (!expense) return "notFound";
-  if (expense.status !== step.from) return "alreadyReviewed";
+  const step = stepFor(me, expense.status);
+  if (!step || expense.status !== step.from) return "alreadyReviewed";
   if (!canReview(me.id, expense.agentId)) return "ownExpense";
   if (approve && (expense.total === null || expense.total <= 0)) return "invalid";
 
@@ -83,7 +87,7 @@ export async function reviewAction(expenseId: string, _prev: FormState, formData
   if (err) return { ok: false, error: err };
 
   revalidatePath("/", "layout");
-  const outcome = !approve ? "rejected" : me.role === "MANAGER" ? "finalApproved" : "forwarded";
+  const outcome = !approve ? "rejected" : "approved";
   return redirect({ href: `/review?done=${outcome}`, locale });
 }
 
@@ -101,6 +105,6 @@ export async function bulkApproveAction(_prev: FormState, formData: FormData): P
     if (!err) approved += 1;
   }
   revalidatePath("/", "layout");
-  const outcome = me.role === "MANAGER" ? "bulkFinal" : "bulkForwarded";
+  const outcome = "bulk";
   return redirect({ href: `/review?done=${outcome}&n=${approved}&skipped=${ids.length - approved}`, locale });
 }

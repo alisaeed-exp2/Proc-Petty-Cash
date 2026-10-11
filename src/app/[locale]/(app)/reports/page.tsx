@@ -14,7 +14,7 @@ export default async function ReportsPage({
   const { locale } = await params;
   const filters = await searchParams;
   setRequestLocale(locale);
-  const user = await requireUser(locale);
+  const user = await requireUser(locale, ["MANAGER", "CONTROLLER", "AGENT"]);
   const r = await getTranslations("reports");
 
   return (

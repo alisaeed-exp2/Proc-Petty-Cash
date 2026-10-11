@@ -3,6 +3,7 @@ import type { Role } from "@prisma/client";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "@/i18n/navigation";
+import { roleAllowed } from "@/lib/access";
 
 export type AppUser = {
   id: string;
@@ -48,7 +49,7 @@ export async function requireUser(
   if (user.mustChangePassword && !opts?.allowForcedChange) {
     return redirect({ href: "/account/password", locale });
   }
-  if (roles && !roles.includes(user.role)) return redirect({ href: "/dashboard", locale });
+  if (!roleAllowed(user.role, roles)) return redirect({ href: "/dashboard", locale });
   return user;
 }
 
@@ -56,6 +57,6 @@ export async function requireUser(
 export async function getActionUser(roles?: Role[]): Promise<AppUser | null> {
   const user = await getCurrentUser();
   if (!user || user.mustChangePassword) return null;
-  if (roles && !roles.includes(user.role)) return null;
+  if (!roleAllowed(user.role, roles)) return null;
   return user;
 }

@@ -12,6 +12,8 @@ datasource db {
 }
 
 enum Role {
+  SYSTEM_ADMIN // all rights
+  GROUP_VP // read-only dashboard
   MANAGER
   CONTROLLER
   AGENT

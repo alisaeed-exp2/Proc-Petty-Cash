@@ -1,12 +1,15 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
 import { getObject, storageConfigured } from "@/lib/storage";
+import { canSeeRecords } from "@/lib/access";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser();
   if (!user || user.mustChangePassword) return new Response("Unauthorized", { status: 401 });
+
+  if (!canSeeRecords(user.role)) return new Response("Forbidden", { status: 403 });
 
   const { id } = await params;
   const file = await prisma.expenseFile.findUnique({

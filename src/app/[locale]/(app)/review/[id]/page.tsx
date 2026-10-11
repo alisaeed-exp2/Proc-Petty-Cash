@@ -42,8 +42,11 @@ export default async function ReviewDetailPage({ params }: { params: Promise<{ l
   if (!e || e.status === "DRAFT") notFound();
 
   const bal = await getAgentBalance(e.agentId);
-  const myStatus = me.role === "MANAGER" ? "CONTROLLER_APPROVED" : "SUBMITTED";
-  const canDecide = e.status === myStatus && e.agentId !== me.id;
+  const canDecide =
+    e.agentId !== me.id &&
+    (me.role === "SYSTEM_ADMIN"
+      ? e.status === "SUBMITTED" || e.status === "CONTROLLER_APPROVED"
+      : e.status === (me.role === "MANAGER" ? "CONTROLLER_APPROVED" : "SUBMITTED"));
 
   return (
     <>
@@ -90,7 +93,7 @@ export default async function ReviewDetailPage({ params }: { params: Promise<{ l
           </Card>
 
           {canDecide ? (
-            <Card title={me.role === "MANAGER" ? t("decisionManager") : t("decision")}>
+            <Card title={e.status === "CONTROLLER_APPROVED" ? t("decisionManager") : t("decision")}>
               <ReviewForm action={reviewAction.bind(null, e.id)} locale={locale} />
             </Card>
           ) : e.agentId === me.id ? (

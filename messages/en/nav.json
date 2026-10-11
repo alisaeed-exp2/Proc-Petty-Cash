@@ -16,6 +16,8 @@
   "roles": {
     "MANAGER": "Procurement Manager",
     "CONTROLLER": "Expense Controller",
-    "AGENT": "Purchase Agent"
+    "AGENT": "Purchase Agent",
+    "SYSTEM_ADMIN": "System Administrator",
+    "GROUP_VP": "Group VP"
   }
 }
