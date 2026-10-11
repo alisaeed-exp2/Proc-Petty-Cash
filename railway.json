@@ -1,7 +1,7 @@
 {
   "$schema": "https://railway.com/railway.schema.json",
   "deploy": {
-    "preDeployCommand": ["npx prisma migrate deploy"],
+    "preDeployCommand": ["node scripts/bootstrap.cjs"],
     "startCommand": "npm run start",
     "healthcheckPath": "/en/login",
     "healthcheckTimeout": 120,
