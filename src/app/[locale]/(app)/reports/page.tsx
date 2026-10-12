@@ -1,8 +1,8 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { requireUser } from "@/lib/session";
 import { REPORTS, type Filters } from "@/lib/reports";
-import { Card, PageHeader, btnPrimary } from "@/components/ui";
-import { ReportFilters, exportHref } from "@/components/report-filters";
+import { Card, PageHeader, btnPrimary, btnSecondary } from "@/components/ui";
+import { ReportFilters, exportHref, pdfHref } from "@/components/report-filters";
 
 export default async function ReportsPage({
   params,
@@ -25,9 +25,14 @@ export default async function ReportsPage({
         {REPORTS.map((key) => (
           <Card key={key} title={r(`names.${key}`)}>
             <p className="mb-4 text-sm text-muted">{r(`descriptions.${key}`)}</p>
-            <a href={exportHref(key, locale, filters)} className={btnPrimary}>
-              {r("download")}
-            </a>
+            <div className="flex flex-wrap gap-3">
+              <a href={exportHref(key, locale, filters)} className={btnPrimary}>
+                {r("downloadExcel")}
+              </a>
+              <a href={pdfHref(key, locale, filters)} target="_blank" rel="noreferrer" className={btnSecondary}>
+                {r("downloadPdf")}
+              </a>
+            </div>
           </Card>
         ))}
       </div>

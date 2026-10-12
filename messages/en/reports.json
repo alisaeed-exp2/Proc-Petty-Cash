@@ -21,14 +21,14 @@
     "names": {
       "consumption": "Consumption history",
       "agents": "Agent summary",
-      "companies": "Company and project breakdown",
+      "companies": "Company and project / location / department breakdown",
       "cash": "Cash movements",
       "pending": "Pending and unresolved"
     },
     "descriptions": {
       "consumption": "Every approved invoice with vendor, VAT, flags and approver.",
       "agents": "Allocation, consumption %, residual cash, pending and unresolved per agent.",
-      "companies": "Approved spending grouped by company and project.",
+      "companies": "Approved spending grouped by company and project / location / department.",
       "cash": "Funding, allocations, cash returns and adjustments.",
       "pending": "Invoices awaiting approval and rejected invoices still unresolved."
     },
@@ -43,7 +43,7 @@
       "invoiceDate": "Invoice date",
       "agent": "Agent",
       "company": "Company",
-      "project": "Project",
+      "project": "Project / Location / Department",
       "vendor": "Vendor",
       "vatNo": "Vendor VAT no.",
       "invoiceNo": "Invoice no.",
@@ -71,6 +71,12 @@
       "status": "Status",
       "submittedAt": "Submitted on",
       "reason": "Rejection reason"
-    }
+    },
+    "downloadExcel": "Excel",
+    "downloadPdf": "PDF",
+    "pdfHint": "Opens a print-ready report. Choose “Save as PDF” in the print window.",
+    "print": "Print / Save as PDF",
+    "back": "Back to reports",
+    "rowsCount": "{count} rows"
   }
 }

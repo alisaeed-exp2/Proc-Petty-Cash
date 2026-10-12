@@ -30,7 +30,7 @@
     "name": "Name",
     "email": "Email",
     "company": "Company",
-    "project": "Project",
+    "project": "Project / Location / Department",
     "agent": "Agent",
     "currency": "SAR",
     "optional": "optional",

@@ -4,7 +4,7 @@ import { buildReport, type Filters } from "@/lib/reports";
 import { formatHalalas } from "@/lib/ledger/money";
 import { formatDate } from "@/lib/format";
 import { Card, Empty, PageHeader, Stat, Table, btnSecondary, td, tdNum, th, thNum } from "@/components/ui";
-import { ReportFilters, exportHref } from "@/components/report-filters";
+import { ReportFilters, exportHref, pdfHref } from "@/components/report-filters";
 import { FlagBadges } from "@/components/expense-view";
 import { Link } from "@/i18n/navigation";
 
@@ -37,7 +37,12 @@ export default async function ConsumptionPage({
       <PageHeader
         title={r("consumptionTitle")}
         subtitle={r("consumptionSubtitle")}
-        actions={<a href={exportHref("consumption", locale, filters)} className={btnSecondary}>{r("download")}</a>}
+        actions={
+          <>
+            <a href={exportHref("consumption", locale, filters)} className={btnSecondary}>{r("downloadExcel")}</a>
+            <a href={pdfHref("consumption", locale, filters)} target="_blank" rel="noreferrer" className={btnSecondary}>{r("downloadPdf")}</a>
+          </>
+        }
       />
       <ReportFilters action="/consumption" filters={filters} showAgent locale={locale} />
 

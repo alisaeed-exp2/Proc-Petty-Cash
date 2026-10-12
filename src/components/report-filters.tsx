@@ -73,3 +73,13 @@ export function exportHref(report: string, locale: string, f: Filters): string {
   if (f.companyId) p.set("companyId", f.companyId);
   return `/api/export/${report}?${p.toString()}`;
 }
+
+export function pdfHref(report: string, locale: string, f: Filters): string {
+  const p = new URLSearchParams();
+  if (f.from) p.set("from", f.from);
+  if (f.to) p.set("to", f.to);
+  if (f.agentId) p.set("agentId", f.agentId);
+  if (f.companyId) p.set("companyId", f.companyId);
+  const qs = p.toString();
+  return `/${locale}/print/${report}${qs ? `?${qs}` : ""}`;
+}

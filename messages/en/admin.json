@@ -34,20 +34,20 @@
       "adminRoleNote": "As System Administrator you can change any role. Existing cash and invoices stay with the user."
     },
     "companies": {
-      "title": "Companies & projects",
-      "subtitle": "The group's companies and their projects or initiatives. Agents pick one when uploading an invoice.",
+      "title": "Companies & projects / locations / departments",
+      "subtitle": "The group's companies and their projects, locations or departments. Agents pick one when uploading an invoice.",
       "empty": "No companies yet. Add the first one.",
       "code": "Code",
-      "projects": "Projects",
+      "projects": "Projects / Locations / Departments",
       "manage": "Manage",
       "new": "New company",
       "nameEn": "Name (English)",
       "nameAr": "Name (Arabic)",
       "edit": "Company details",
-      "detailSubtitle": "Edit the company and manage its projects.",
+      "detailSubtitle": "Edit the company and manage its projects / locations / departments.",
       "deactivate": "Deactivate",
       "activate": "Activate",
-      "deactivateNote": "Inactive companies and projects stay in reports but cannot be chosen for new expenses.",
+      "deactivateNote": "Inactive companies and projects / locations / departments stay in reports but cannot be chosen for new expenses.",
       "info": {
         "created": "Created.",
         "saved": "Saved."
@@ -60,9 +60,9 @@
       }
     },
     "projects": {
-      "title": "Projects",
-      "new": "New project",
-      "empty": "No projects yet. Projects are optional when an agent uploads an invoice."
+      "title": "Projects / Locations / Departments",
+      "new": "New project / location / department",
+      "empty": "None yet. This choice is optional when an agent uploads an invoice."
     }
   }
 }
