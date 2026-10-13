@@ -34,7 +34,7 @@ export async function createExpenseAction(_prev: FormState, formData: FormData):
   const ctx = await getActionContext(["AGENT"]);
   if (!ctx) return { ok: false, error: "unauthorized" };
   const me = ctx.user;
-  if (!storageConfigured()) return { ok: false, error: "storage" };
+  if (!(await storageConfigured())) return { ok: false, error: "storage" };
 
   const locale = formData.get("locale") === "ar" ? "ar" : "en";
   // Every record is created under the company the agent is currently working in.
@@ -141,7 +141,7 @@ export async function saveExpenseAction(expenseId: string, _prev: FormState, for
 
   const read = await readUploads(formData.getAll("files"), { required: false });
   if ("error" in read) return { ok: false, error: read.error };
-  if (read.files.length > 0 && !storageConfigured()) return { ok: false, error: "storage" };
+  if (read.files.length > 0 && !(await storageConfigured())) return { ok: false, error: "storage" };
 
   if (submit) {
     if (!d.vendorName || !invoiceDate || total === null || total <= 0) return { ok: false, error: "requiredFields" };
@@ -237,7 +237,7 @@ export async function deleteDraftAction(expenseId: string, _prev: FormState, for
     await tx.expense.delete({ where: { id: expenseId } });
     await audit(me.id, "expense.deleteDraft", "Expense", expenseId, { files: expense.files.length }, tx);
   });
-  if (storageConfigured()) {
+  if (await storageConfigured()) {
     await Promise.all(expense.files.map((f) => deleteObject(f.storageKey).catch((e) => console.error("delete object failed", e))));
   }
   revalidatePath("/", "layout");

@@ -81,6 +81,83 @@
       "title": "Projects / Locations / Departments",
       "new": "New project / location / department",
       "empty": "None yet. This choice is optional when an agent uploads an invoice."
+    },
+    "settings": {
+      "title": "System settings",
+      "subtitle": "File storage, automatic invoice reading and email. Saved in the database; no server restart needed.",
+      "precedence": "A value saved here is used instead of the server's environment variable. Empty fields fall back to the environment variable, if any. Keys are stored encrypted and are never shown again.",
+      "secretSaved": "Saved. Type to replace",
+      "clear": "Remove the saved value",
+      "source": {
+        "db": "Saved here",
+        "env": "From server environment",
+        "none": "Not set"
+      },
+      "bool": {
+        "default": "Default (off)",
+        "yes": "Yes",
+        "no": "No"
+      },
+      "groups": {
+        "storage": {
+          "title": "File storage (S3 compatible)",
+          "hint": "Where invoice files and company logos are kept permanently. Works with Alibaba Cloud OSS, MinIO, AWS S3 or any S3-compatible service."
+        },
+        "ocr": {
+          "title": "Automatic invoice reading",
+          "hint": "Lets the app read invoice details from the uploaded file. Without a key, agents type the details by hand."
+        },
+        "email": {
+          "title": "Email notifications",
+          "hint": "Sends review and decision emails. Without a key, no emails are sent."
+        },
+        "general": {
+          "title": "General",
+          "hint": "Used for the links inside emails."
+        }
+      },
+      "fields": {
+        "S3_ENDPOINT": "Endpoint URL",
+        "S3_BUCKET": "Bucket name",
+        "S3_REGION": "Region",
+        "S3_ACCESS_KEY_ID": "Access key ID",
+        "S3_SECRET_ACCESS_KEY": "Secret access key",
+        "S3_FORCE_PATH_STYLE": "Path-style addressing",
+        "ANTHROPIC_API_KEY": "Anthropic API key",
+        "ANTHROPIC_MODEL": "Model (optional)",
+        "RESEND_API_KEY": "Resend API key",
+        "EMAIL_FROM": "Sender address",
+        "APP_URL": "Application URL"
+      },
+      "help": {
+        "S3_ENDPOINT": "For example https://oss-me-central-1.aliyuncs.com (use your region's endpoint).",
+        "S3_BUCKET": "The bucket must already exist.",
+        "S3_REGION": "Leave empty unless your provider requires one.",
+        "S3_ACCESS_KEY_ID": "Needs read, write and delete on the bucket.",
+        "S3_SECRET_ACCESS_KEY": "Stored encrypted.",
+        "S3_FORCE_PATH_STYLE": "Turn on for MinIO and some other services if uploads fail.",
+        "ANTHROPIC_API_KEY": "Starts with sk-ant-. Stored encrypted.",
+        "ANTHROPIC_MODEL": "Leave empty for the default.",
+        "RESEND_API_KEY": "Stored encrypted.",
+        "EMAIL_FROM": "For example AKCC Petty Cash <noreply@yourdomain.com>. The domain must be verified in Resend.",
+        "APP_URL": "For example https://petty.yourcompany.com, without a trailing slash."
+      },
+      "test": {
+        "title": "Test file storage",
+        "hint": "Saves the settings above first, then press the button to write and delete a small test file.",
+        "run": "Test storage"
+      },
+      "info": {
+        "saved": "Settings saved.",
+        "storageOk": "Storage works: a test file was written and deleted."
+      },
+      "errors": {
+        "unauthorized": "Only a System Administrator can change settings.",
+        "badUrl": "A URL must start with http:// or https://.",
+        "noAuthSecret": "The server has no AUTH_SECRET, so keys cannot be stored securely. Set AUTH_SECRET in the server environment first.",
+        "storageMissing": "Storage is not fully configured: endpoint, bucket, access key and secret are all required.",
+        "storageFailed": "The storage test failed. Check the endpoint, bucket and keys (path-style may help). Error type:"
+      }
     }
   }
 }

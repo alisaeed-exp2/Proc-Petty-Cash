@@ -21,7 +21,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   if (user.role === "AGENT" && file.expense.agentId !== user.id) return new Response("Forbidden", { status: 403 });
   const allowed = await getAllowedCompanies(user.id, user.role);
   if (!allowed.some((c) => c.id === file.expense.companyId)) return new Response("Forbidden", { status: 403 });
-  if (!storageConfigured()) return new Response("Storage not configured", { status: 503 });
+  if (!(await storageConfigured())) return new Response("Storage not configured", { status: 503 });
 
   try {
     const obj = await getObject(file.storageKey);

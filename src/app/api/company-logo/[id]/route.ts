@@ -13,7 +13,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const isAdmin = user.role === "MANAGER" || user.role === "SYSTEM_ADMIN";
   if (!isAdmin && !allowed.some((c) => c.id === id)) return new Response("Forbidden", { status: 403 });
   const company = await prisma.company.findUnique({ where: { id }, select: { logoKey: true, logoMime: true } });
-  if (!company?.logoKey || !storageConfigured()) return new Response("Not found", { status: 404 });
+  if (!company?.logoKey || !(await storageConfigured())) return new Response("Not found", { status: 404 });
   try {
     const obj = await getObject(company.logoKey);
     return new Response(obj.stream, {

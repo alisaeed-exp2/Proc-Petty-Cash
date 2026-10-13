@@ -1,9 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { formatHalalas } from "@/lib/ledger/money";
+import { getSetting } from "@/lib/settings";
 
 type Lang = "en" | "ar";
 
-const APP_URL = () => (process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || "").replace(/\/$/, "");
+const APP_URL = async () => ((await getSetting("APP_URL")) || "").replace(/\/$/, "");
 
 const TEXT = {
   en: {
@@ -60,15 +61,15 @@ ${link ? `<a href="${esc(link)}" style="display:inline-block;background:#043E50;
 }
 
 async function send(to: string, subject: string, lang: Lang, body: string, path: string) {
-  const key = process.env.RESEND_API_KEY;
+  const key = await getSetting("RESEND_API_KEY");
   if (!key) return; // email is optional until a key is configured
-  const base = APP_URL();
+  const base = await APP_URL();
   const link = base ? `${base}/${lang}${path}` : null;
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      from: process.env.EMAIL_FROM || "AKCC Petty Cash <onboarding@resend.dev>",
+      from: (await getSetting("EMAIL_FROM")) || "AKCC Petty Cash <onboarding@resend.dev>",
       to: [to],
       subject,
       html: html(lang, body, link),
@@ -82,7 +83,7 @@ const lang = (l: string): Lang => (l === "ar" ? "ar" : "en");
 
 /** Agent submitted: tell the controllers; if over limit also tell the manager. */
 export async function notifySubmitted(expenseId: string): Promise<void> {
-  if (!process.env.RESEND_API_KEY) return;
+  if (!(await getSetting("RESEND_API_KEY"))) return;
   const e = await prisma.expense.findUnique({
     where: { id: expenseId },
     include: { agent: { select: { name: true } }, company: true },
@@ -118,7 +119,7 @@ export async function notifySubmitted(expenseId: string): Promise<void> {
  * Manager approval or any rejection -> tell the agent.
  */
 export async function notifyReviewed(expenseId: string): Promise<void> {
-  if (!process.env.RESEND_API_KEY) return;
+  if (!(await getSetting("RESEND_API_KEY"))) return;
   const e = await prisma.expense.findUnique({
     where: { id: expenseId },
     include: {

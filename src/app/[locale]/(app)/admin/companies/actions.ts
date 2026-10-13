@@ -173,7 +173,7 @@ export async function uploadLogoAction(companyId: string, _prev: FormState, form
   if (!(file instanceof File) || file.size === 0) return { ok: false, error: "logoInvalid" };
   const ext = LOGO_TYPES[file.type];
   if (!ext || file.size > 2 * 1024 * 1024) return { ok: false, error: "logoInvalid" };
-  if (!storageConfigured()) return { ok: false, error: "logoStorage" };
+  if (!(await storageConfigured())) return { ok: false, error: "logoStorage" };
   const company = await prisma.company.findUnique({ where: { id: companyId }, select: { logoKey: true } });
   if (!company) return { ok: false, error: "notFound" };
 

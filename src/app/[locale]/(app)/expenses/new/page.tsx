@@ -21,7 +21,7 @@ export default async function NewExpensePage({ params }: { params: Promise<{ loc
     <>
       <PageHeader title={t("newTitle")} subtitle={t("newSubtitle")} />
       <div className="max-w-2xl">
-        {!storageConfigured() && <div className="mb-4"><Notice tone="warn">{t("errors.storage")}</Notice></div>}
+        {!(await storageConfigured()) && <div className="mb-4"><Notice tone="warn">{t("errors.storage")}</Notice></div>}
         <Card>
           <NewExpenseForm action={createExpenseAction} companyName={companyName(company, locale)} projects={projects} locale={locale} />
         </Card>

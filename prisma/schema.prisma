@@ -290,3 +290,12 @@ model CompanySignatory {
 
   @@index([companyId, sort])
 }
+
+/// Runtime settings edited from the admin UI. Secrets are stored encrypted (AES-256-GCM).
+model AppSetting {
+  key         String   @id
+  value       String
+  secret      Boolean  @default(false)
+  updatedAt   DateTime @updatedAt
+  updatedById String?
+}

@@ -1,4 +1,5 @@
 import { parseSarToHalalas } from "@/lib/ledger/money";
+import { getSetting } from "@/lib/settings";
 
 export type OcrFields = {
   vendorName: string | null;
@@ -15,7 +16,6 @@ export type OcrOutcome =
   | { status: "skipped" } // no API key
   | { status: "failed"; message: string };
 
-const MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-5-5";
 
 const PROMPT = `You read purchase invoices (Arabic, English or both; Saudi invoices often carry a ZATCA QR code and a 15-digit VAT number starting and ending with 3).
 Extract the following from the invoice and answer with ONE JSON object only, no prose:
@@ -43,8 +43,9 @@ function str(v: unknown): string | null {
 }
 
 export async function extractInvoice(file: { data: Buffer; mimeType: string }): Promise<OcrOutcome> {
-  const key = process.env.ANTHROPIC_API_KEY;
+  const key = await getSetting("ANTHROPIC_API_KEY");
   if (!key) return { status: "skipped" };
+  const MODEL = (await getSetting("ANTHROPIC_MODEL")) || "claude-sonnet-5-5";
 
   const base64 = file.data.toString("base64");
   const block =

@@ -11,8 +11,11 @@ Minimum: 2 vCPU, 4 GB RAM, 40 GB disk, Ubuntu 22.04/24.04. App and PostgreSQL ru
         CERT_EMAIL=you@company.com bash /tmp/akcc-setup/deploy/setup-server.sh
    ```
    The generated first-admin password is printed once at step 4 (also in /opt/akcc/.env).
-4. Edit `/opt/akcc/.env` to add the `S3_*` storage settings (needed for invoice and logo uploads),
-   and optionally `ANTHROPIC_API_KEY`, `RESEND_API_KEY`, `EMAIL_FROM`; then `sudo systemctl restart akcc`.
+4. Sign in as a System Administrator and open **System settings** to enter the file-storage (S3/OSS),
+   Anthropic API key and email settings. They are saved encrypted in the database (no restart needed).
+   Promote your account first if needed:
+   `sudo -u postgres psql -d akcc -c "UPDATE \"User\" SET role='SYSTEM_ADMIN' WHERE email='you@company.com';"`
+   (Environment variables still work as a fallback.)
 5. Update later with `sudo akcc-deploy`. Logs: `journalctl -u akcc -f`.
 6. Backups: nightly database dump to /var/backups/akcc (14 days). Also copy them off the server
    and enable ECS disk snapshots. Invoice files live in the S3/OSS bucket; back that up too.

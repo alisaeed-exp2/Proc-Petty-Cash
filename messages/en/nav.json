@@ -11,7 +11,8 @@
     "reports": "Reports",
     "users": "Users",
     "companies": "Companies & projects",
-    "account": "Change password"
+    "account": "Change password",
+    "settings": "System settings"
   },
   "roles": {
     "MANAGER": "Procurement Manager",
