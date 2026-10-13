@@ -102,6 +102,7 @@ model Company {
   expenses Expense[]
   scopedUsers User[] @relation("UserScope")
   members     UserCompany[]
+  signatories CompanySignatory[]
   fundings    Funding[]
   allocations Allocation[]
   cashReturns CashReturn[]
@@ -274,4 +275,16 @@ model AuditLog {
 
   @@index([entity, entityId])
   @@index([createdAt])
+}
+
+// Signatures printed in the footer of the company's PDF reports, left to right by sort order.
+model CompanySignatory {
+  id         String  @id @default(cuid())
+  companyId  String
+  company    Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  sort       Int     @default(0)
+  positionEn String
+  positionAr String
+
+  @@index([companyId, sort])
 }

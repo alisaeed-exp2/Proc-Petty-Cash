@@ -12,6 +12,9 @@ import {
   toggleProjectActiveAction,
   updateCompanyAction,
   updateProjectAction,
+  addSignatoryAction,
+  updateSignatoryAction,
+  deleteSignatoryAction,
 } from "../actions";
 
 export default async function CompanyDetailPage({ params }: { params: Promise<{ locale: string; id: string }> }) {
@@ -23,7 +26,10 @@ export default async function CompanyDetailPage({ params }: { params: Promise<{ 
 
   const company = await prisma.company.findUnique({
     where: { id },
-    include: { projects: { orderBy: [{ active: "desc" }, { code: "asc" }] } },
+    include: {
+      projects: { orderBy: [{ active: "desc" }, { code: "asc" }] },
+      signatories: { orderBy: [{ sort: "asc" }, { id: "asc" }] },
+    },
   });
   if (!company) notFound();
 
@@ -129,6 +135,67 @@ export default async function CompanyDetailPage({ params }: { params: Promise<{ 
             ))}
           </ul>
         )}
+      </Card>
+
+      <Card title={t("signatures.title")} className="mt-6">
+        <p className="mb-4 text-sm text-muted">{t("signatures.hint")}</p>
+        {company.signatories.length === 0 ? (
+          <Empty>{t("signatures.empty")}</Empty>
+        ) : (
+          <ul className="divide-y divide-line">
+            {company.signatories.map((sg) => (
+              <li key={sg.id} className="flex flex-col gap-3 py-4 lg:flex-row lg:items-start">
+                <ActionForm
+                  action={updateSignatoryAction.bind(null, sg.id)}
+                  namespace="admin.companies"
+                  submit={c("save")}
+                  className="grid flex-1 gap-3 sm:grid-cols-[5rem_1fr_1fr_auto] sm:items-end"
+                  buttonClassName={small}
+                >
+                  <div>
+                    <label className="text-xs text-muted" htmlFor={`so-${sg.id}`}>{t("signatures.order")}</label>
+                    <input id={`so-${sg.id}`} name="sort" type="number" min={0} max={999} defaultValue={sg.sort} dir="ltr" className={`${inputCls} text-start`} />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted" htmlFor={`se-${sg.id}`}>{t("signatures.positionEn")}</label>
+                    <input id={`se-${sg.id}`} name="positionEn" required defaultValue={sg.positionEn} dir="ltr" className={`${inputCls} text-start`} />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted" htmlFor={`sa-${sg.id}`}>{t("signatures.positionAr")}</label>
+                    <input id={`sa-${sg.id}`} name="positionAr" required defaultValue={sg.positionAr} dir="rtl" className={inputCls} />
+                  </div>
+                </ActionForm>
+                <ActionForm
+                  action={deleteSignatoryAction.bind(null, sg.id)}
+                  namespace="admin.companies"
+                  submit={c("delete")}
+                  className="space-y-0"
+                  buttonClassName={small}
+                />
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <div className="mt-5 border-t border-line pt-5">
+          <h3 className="mb-3 text-sm font-semibold text-ocean">{t("signatures.add")}</h3>
+          <ActionForm
+            action={addSignatoryAction.bind(null, company.id)}
+            namespace="admin.companies"
+            submit={t("signatures.add")}
+            className="grid gap-3 sm:grid-cols-2"
+            resetOnSuccess
+          >
+            <div>
+              <label className={labelCls} htmlFor="sn-en">{t("signatures.positionEn")}</label>
+              <input id="sn-en" name="positionEn" required dir="ltr" className={`${inputCls} text-start`} />
+            </div>
+            <div>
+              <label className={labelCls} htmlFor="sn-ar">{t("signatures.positionAr")}</label>
+              <input id="sn-ar" name="positionAr" required dir="rtl" className={inputCls} />
+            </div>
+          </ActionForm>
+        </div>
       </Card>
     </>
   );

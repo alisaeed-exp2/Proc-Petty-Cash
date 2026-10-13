@@ -4,6 +4,7 @@ import { companyName, requireCompany } from "@/lib/company";
 import { REPORTS, buildReport, type Cell, type Col, type Filters, type ReportKey } from "@/lib/reports";
 import { formatHalalas } from "@/lib/ledger/money";
 import { formatDate } from "@/lib/format";
+import { prisma } from "@/lib/prisma";
 import { PrintButton } from "@/components/print-button";
 import { Link } from "@/i18n/navigation";
 
@@ -44,6 +45,11 @@ export default async function PrintReportPage({
     locale,
     { yes: r("yes"), type: (k) => r(`types.${k}`), status: (k) => x(`status.${k}`) },
   );
+
+  const signatories = await prisma.companySignatory.findMany({
+    where: { companyId: company.id },
+    orderBy: [{ sort: "asc" }, { id: "asc" }],
+  });
 
   const period = filters.from || filters.to ? `${filters.from ?? "…"} → ${filters.to ?? "…"}` : r("allDates");
   const totals = data.sumKeys.length > 0 && data.rows.length > 0;
@@ -114,6 +120,19 @@ export default async function PrintReportPage({
           )}
         </tbody>
       </table>
+      {signatories.length > 0 && (
+        <footer dir="ltr" className="mt-16 break-inside-avoid">
+          <div className="grid gap-8" style={{ gridTemplateColumns: `repeat(${signatories.length}, minmax(0, 1fr))` }}>
+            {signatories.map((sg) => (
+              <div key={sg.id} className="text-center">
+                <div className="mx-auto mb-2 h-12 w-4/5 border-b border-ink" />
+                <div className="text-sm font-semibold">{sg.positionEn}</div>
+                <div dir="rtl" className="text-sm">{sg.positionAr}</div>
+              </div>
+            ))}
+          </div>
+        </footer>
+      )}
       {data.rows.length === 0 && <p className="mt-6 text-center text-sm text-muted">{r("empty")}</p>}
     </div>
   );

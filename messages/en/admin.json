@@ -57,6 +57,15 @@
         "invalid": "Please fill in the code and both names (code: letters, digits, - or _).",
         "codeTaken": "This code is already in use.",
         "notFound": "Not found."
+      },
+      "signatures": {
+        "title": "Required signatures",
+        "hint": "Printed at the bottom of this company's PDF reports, left to right in this order. Each entry has an English and an Arabic position.",
+        "empty": "No signatures configured. PDF reports will have no signature footer.",
+        "order": "Order",
+        "positionEn": "Position (English)",
+        "positionAr": "Position (Arabic)",
+        "add": "Add signature"
       }
     },
     "projects": {

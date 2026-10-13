@@ -106,3 +106,59 @@ export async function toggleProjectActiveAction(projectId: string, _prev: FormSt
   refresh();
   return { ok: true, error: null };
 }
+
+const signatorySchema = z.object({
+  positionEn: z.string().trim().min(1).max(120),
+  positionAr: z.string().trim().min(1).max(120),
+  sort: z.coerce.number().int().min(0).max(999).optional(),
+});
+
+function readSignatory(formData: FormData) {
+  return signatorySchema.safeParse({
+    positionEn: formData.get("positionEn"),
+    positionAr: formData.get("positionAr"),
+    sort: formData.get("sort") || undefined,
+  });
+}
+
+export async function addSignatoryAction(companyId: string, _prev: FormState, formData: FormData): Promise<FormState> {
+  const me = await getActionUser(["MANAGER"]);
+  if (!me) return { ok: false, error: "unauthorized" };
+  const parsed = readSignatory(formData);
+  if (!parsed.success) return { ok: false, error: "invalid" };
+  const last = await prisma.companySignatory.aggregate({ where: { companyId }, _max: { sort: true } });
+  const row = await prisma.companySignatory.create({
+    data: {
+      companyId,
+      positionEn: parsed.data.positionEn,
+      positionAr: parsed.data.positionAr,
+      sort: parsed.data.sort ?? (last._max.sort ?? 0) + 1,
+    },
+  });
+  await audit(me.id, "signatory.create", "CompanySignatory", row.id, parsed.data);
+  refresh();
+  return { ok: true, error: null, info: "created" };
+}
+
+export async function updateSignatoryAction(id: string, _prev: FormState, formData: FormData): Promise<FormState> {
+  const me = await getActionUser(["MANAGER"]);
+  if (!me) return { ok: false, error: "unauthorized" };
+  const parsed = readSignatory(formData);
+  if (!parsed.success) return { ok: false, error: "invalid" };
+  await prisma.companySignatory.update({
+    where: { id },
+    data: { positionEn: parsed.data.positionEn, positionAr: parsed.data.positionAr, ...(parsed.data.sort !== undefined ? { sort: parsed.data.sort } : {}) },
+  });
+  await audit(me.id, "signatory.update", "CompanySignatory", id, parsed.data);
+  refresh();
+  return { ok: true, error: null, info: "saved" };
+}
+
+export async function deleteSignatoryAction(id: string, _prev: FormState, _fd: FormData): Promise<FormState> {
+  const me = await getActionUser(["MANAGER"]);
+  if (!me) return { ok: false, error: "unauthorized" };
+  await prisma.companySignatory.delete({ where: { id } }).catch(() => null);
+  await audit(me.id, "signatory.delete", "CompanySignatory", id);
+  refresh();
+  return { ok: true, error: null };
+}
