@@ -1,6 +1,7 @@
 import ExcelJS from "exceljs";
 import { getTranslations } from "next-intl/server";
 import { getCurrentUser } from "@/lib/session";
+import { companyName, getActiveCompany } from "@/lib/company";
 import { REPORTS, buildReport, type Cell, type ReportKey } from "@/lib/reports";
 import { formatDate } from "@/lib/format";
 import { canSeeRecords } from "@/lib/access";
@@ -17,6 +18,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ report: 
 
   if (!canSeeRecords(user.role)) return new Response("Forbidden", { status: 403 });
 
+  const company = await getActiveCompany(user.id, user.role);
+  if (!company) return new Response("No company selected", { status: 400 });
+
   const { report } = await params;
   if (!(REPORTS as readonly string[]).includes(report)) return new Response("Not found", { status: 404 });
   const key = report as ReportKey;
@@ -27,12 +31,11 @@ export async function GET(req: Request, { params }: { params: Promise<{ report: 
     from: url.searchParams.get("from") || undefined,
     to: url.searchParams.get("to") || undefined,
     agentId: url.searchParams.get("agentId") || undefined,
-    companyId: url.searchParams.get("companyId") || undefined,
   };
 
   const r = await getTranslations({ locale, namespace: "reports" });
   const x = await getTranslations({ locale, namespace: "expenses" });
-  const data = await buildReport(key, { role: user.role, userId: user.id }, filters, locale, {
+  const data = await buildReport(key, { role: user.role, userId: user.id, companyId: company.id }, filters, locale, {
     yes: r("yes"),
     type: (k) => r(`types.${k}`),
     status: (k) => x(`status.${k}`),
@@ -47,7 +50,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ report: 
 
   const ncols = data.cols.length;
   ws.mergeCells(1, 1, 1, Math.max(ncols, 2));
-  ws.getCell(1, 1).value = `${r("company")} - ${r(`names.${key}`)}`;
+  ws.getCell(1, 1).value = `${companyName(company, locale)} - ${r(`names.${key}`)}`;
   ws.getCell(1, 1).font = { bold: true, size: 14, color: { argb: OCEAN } };
   ws.mergeCells(2, 1, 2, Math.max(ncols, 2));
   const period = filters.from || filters.to ? `${filters.from ?? "…"} → ${filters.to ?? "…"}` : r("allDates");

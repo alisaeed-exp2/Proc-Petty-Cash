@@ -1,37 +1,34 @@
 "use client";
 
-import { useActionState, useRef, useState } from "react";
+import { useActionState, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { btnPrimary, btnSecondary, inputCls, labelCls, hintCls, Notice } from "@/components/ui";
 import { emptyState, type FormState } from "@/components/action-form";
 
-export type CompanyOption = { id: string; name: string; projects: { id: string; name: string }[] };
+export type ProjectOption = { id: string; name: string };
 
-function CompanyProject({ companies, companyId, projectId }: { companies: CompanyOption[]; companyId?: string; projectId?: string | null }) {
+function ProjectSelect({ projects, projectId }: { projects: ProjectOption[]; projectId?: string | null }) {
   const t = useTranslations("expenses");
   const c = useTranslations("common");
-  const [company, setCompany] = useState(companyId ?? "");
-  const projects = companies.find((x) => x.id === company)?.projects ?? [];
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
-      <div>
-        <label className={labelCls} htmlFor="companyId">{c("company")} *</label>
-        <select id="companyId" name="companyId" required value={company} onChange={(e) => setCompany(e.target.value)} className={inputCls}>
-          <option value="" disabled>{t("chooseCompany")}</option>
-          {companies.map((x) => (
-            <option key={x.id} value={x.id}>{x.name}</option>
-          ))}
-        </select>
-      </div>
-      <div>
-        <label className={labelCls} htmlFor="projectId">{c("project")} ({c("optional")})</label>
-        <select id="projectId" name="projectId" defaultValue={projectId ?? ""} key={company} className={inputCls}>
-          <option value="">{t("noProject")}</option>
-          {projects.map((x) => (
-            <option key={x.id} value={x.id}>{x.name}</option>
-          ))}
-        </select>
-      </div>
+    <div>
+      <label className={labelCls} htmlFor="projectId">{c("project")} ({c("optional")})</label>
+      <select id="projectId" name="projectId" defaultValue={projectId ?? ""} className={inputCls}>
+        <option value="">{t("noProject")}</option>
+        {projects.map((x) => (
+          <option key={x.id} value={x.id}>{x.name}</option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+function CompanyBadge({ name }: { name: string }) {
+  const c = useTranslations("common");
+  return (
+    <div>
+      <span className={labelCls}>{c("company")}</span>
+      <div className="mt-1 rounded-control border border-line bg-gray px-3.5 py-2.5 text-sm font-semibold text-ocean">{name}</div>
     </div>
   );
 }
@@ -48,11 +45,13 @@ function Messages({ state }: { state: FormState }) {
 
 export function NewExpenseForm({
   action,
-  companies,
+  companyName,
+  projects,
   locale,
 }: {
   action: (prev: FormState, fd: FormData) => Promise<FormState>;
-  companies: CompanyOption[];
+  companyName: string;
+  projects: ProjectOption[];
   locale: string;
 }) {
   const t = useTranslations("expenses");
@@ -93,7 +92,10 @@ export function NewExpenseForm({
     <form action={formAction} className="space-y-5">
       <input type="hidden" name="locale" value={locale} />
       <input type="hidden" name="qr" ref={qrRef} />
-      <CompanyProject companies={companies} />
+      <div className="grid gap-4 sm:grid-cols-2">
+        <CompanyBadge name={companyName} />
+        <ProjectSelect projects={projects} />
+      </div>
       <div>
         <label className={labelCls} htmlFor="files">{t("files")} *</label>
         <input
@@ -136,13 +138,15 @@ export type ExpenseValues = {
 
 export function ExpenseEditForm({
   action,
-  companies,
+  companyName,
+  projects,
   values,
   locale,
   rejected,
 }: {
   action: (prev: FormState, fd: FormData) => Promise<FormState>;
-  companies: CompanyOption[];
+  companyName: string;
+  projects: ProjectOption[];
   values: ExpenseValues;
   locale: string;
   rejected: boolean;
@@ -154,7 +158,10 @@ export function ExpenseEditForm({
   return (
     <form action={formAction} className="space-y-4">
       <input type="hidden" name="locale" value={locale} />
-      <CompanyProject companies={companies} companyId={values.companyId} projectId={values.projectId} />
+      <div className="grid gap-4 sm:grid-cols-2">
+        <CompanyBadge name={companyName} />
+        <ProjectSelect projects={projects} projectId={values.projectId} />
+      </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="sm:col-span-2">
           <label className={labelCls} htmlFor="vendorName">{t("vendor")} *</label>

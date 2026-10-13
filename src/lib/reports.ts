@@ -6,8 +6,8 @@ import { getAllAgentBalances } from "@/lib/ledger/db";
 export const REPORTS = ["consumption", "agents", "companies", "cash", "pending"] as const;
 export type ReportKey = (typeof REPORTS)[number];
 
-export type Scope = { role: Role; userId: string };
-export type Filters = { from?: string; to?: string; agentId?: string; companyId?: string };
+export type Scope = { role: Role; userId: string; companyId: string };
+export type Filters = { from?: string; to?: string; agentId?: string };
 export type Labels = {
   yes: string;
   type: (k: string) => string;
@@ -47,7 +47,7 @@ export async function buildReport(
       where: {
         status: "APPROVED",
         ...(agentId ? { agentId } : {}),
-        ...(f.companyId ? { companyId: f.companyId } : {}),
+        companyId: scope.companyId,
         ...(dates ? { invoiceDate: dates } : {}),
       },
       orderBy: [{ invoiceDate: "desc" }, { createdAt: "desc" }],
@@ -96,7 +96,7 @@ export async function buildReport(
   }
 
   if (report === "agents") {
-    let balances = await getAllAgentBalances();
+    let balances = await getAllAgentBalances(scope.companyId);
     if (agentId) balances = balances.filter((b) => b.agentId === agentId);
     return {
       cols: [
@@ -132,7 +132,7 @@ export async function buildReport(
       where: {
         status: "APPROVED",
         ...(agentId ? { agentId } : {}),
-        ...(f.companyId ? { companyId: f.companyId } : {}),
+        companyId: scope.companyId,
         ...(dates ? { invoiceDate: dates } : {}),
       },
       include: { company: true, project: true },
@@ -173,6 +173,7 @@ export async function buildReport(
   if (report === "cash") {
     const entries = await prisma.ledgerEntry.findMany({
       where: {
+        companyId: scope.companyId,
         type: { in: ["FUNDING", "ALLOCATION", "RETURN", "ADJUSTMENT"] },
         ...(scope.role === "AGENT" ? { agentId: scope.userId } : agentId ? { agentId } : {}),
         ...(dates ? { occurredAt: dates } : {}),
@@ -204,7 +205,7 @@ export async function buildReport(
     where: {
       status: { in: ["SUBMITTED", "CONTROLLER_APPROVED", "REJECTED"] },
       ...(agentId ? { agentId } : {}),
-      ...(f.companyId ? { companyId: f.companyId } : {}),
+      companyId: scope.companyId,
     },
     orderBy: [{ status: "asc" }, { submittedAt: "asc" }],
     include: {

@@ -91,7 +91,7 @@ export async function notifySubmitted(expenseId: string): Promise<void> {
   const total = formatHalalas(e.total ?? 0);
   const vendor = e.vendorName ?? "-";
 
-  const controllers = await prisma.user.findMany({ where: { role: "CONTROLLER", active: true }, select: { email: true, locale: true } });
+  const controllers = await prisma.user.findMany({ where: { role: "CONTROLLER", active: true, companies: { some: { companyId: e.companyId } } }, select: { email: true, locale: true } });
   await Promise.all(
     controllers.map((u) => {
       const l = lang(u.locale);
@@ -102,7 +102,7 @@ export async function notifySubmitted(expenseId: string): Promise<void> {
   );
 
   if (e.overspendFlag) {
-    const managers = await prisma.user.findMany({ where: { role: "MANAGER", active: true }, select: { email: true, locale: true } });
+    const managers = await prisma.user.findMany({ where: { role: "MANAGER", active: true, companies: { some: { companyId: e.companyId } } }, select: { email: true, locale: true } });
     await Promise.all(
       managers.map((u) => {
         const l = lang(u.locale);
@@ -132,7 +132,7 @@ export async function notifyReviewed(expenseId: string): Promise<void> {
   const vendor = e.vendorName ?? "-";
 
   if (review.decision === "APPROVED" && review.stage === "CONTROLLER") {
-    const managers = await prisma.user.findMany({ where: { role: "MANAGER", active: true }, select: { email: true, locale: true } });
+    const managers = await prisma.user.findMany({ where: { role: "MANAGER", active: true, companies: { some: { companyId: e.companyId } } }, select: { email: true, locale: true } });
     await Promise.all(
       managers.map((u) => {
         const l = lang(u.locale);

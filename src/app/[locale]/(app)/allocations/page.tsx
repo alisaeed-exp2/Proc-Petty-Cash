@@ -1,6 +1,6 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { prisma } from "@/lib/prisma";
-import { requireUser } from "@/lib/session";
+import { requireCompany } from "@/lib/company";
 import { getAllAgentBalances, getManagerSummary } from "@/lib/ledger/db";
 import { formatHalalas } from "@/lib/ledger/money";
 import { formatDate, toDateInput } from "@/lib/format";
@@ -11,15 +11,15 @@ import { allocateAction, returnCashAction } from "./actions";
 export default async function AllocationsPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  await requireUser(locale, ["MANAGER"]);
+  const { company } = await requireCompany(locale, ["MANAGER"]);
   const t = await getTranslations("allocations");
   const c = await getTranslations("common");
 
   const [summary, balances, allocations, returns] = await Promise.all([
-    getManagerSummary(),
-    getAllAgentBalances(),
-    prisma.allocation.findMany({ orderBy: { allocatedAt: "desc" }, take: 50, include: { agent: { select: { name: true } } } }),
-    prisma.cashReturn.findMany({ orderBy: { returnedAt: "desc" }, take: 50, include: { agent: { select: { name: true } } } }),
+    getManagerSummary(company.id),
+    getAllAgentBalances(company.id),
+    prisma.allocation.findMany({ where: { companyId: company.id }, orderBy: { allocatedAt: "desc" }, take: 50, include: { agent: { select: { name: true } } } }),
+    prisma.cashReturn.findMany({ where: { companyId: company.id }, orderBy: { returnedAt: "desc" }, take: 50, include: { agent: { select: { name: true } } } }),
   ]);
 
   const movements = [

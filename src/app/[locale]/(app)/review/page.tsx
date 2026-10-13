@@ -1,6 +1,6 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { prisma } from "@/lib/prisma";
-import { requireUser } from "@/lib/session";
+import { requireCompany } from "@/lib/company";
 import { localName } from "@/lib/names";
 import { formatHalalas } from "@/lib/ledger/money";
 import { formatDateTime } from "@/lib/format";
@@ -21,7 +21,7 @@ export default async function ReviewQueuePage({
   const { locale } = await params;
   const { filter, done, n, skipped } = await searchParams;
   setRequestLocale(locale);
-  const me = await requireUser(locale, ["CONTROLLER", "MANAGER"]);
+  const { user: me, company } = await requireCompany(locale, ["CONTROLLER", "MANAGER"]);
   const t = await getTranslations("review");
   const isManager = me.role === "MANAGER";
   const isAdmin = me.role === "SYSTEM_ADMIN";
@@ -30,6 +30,7 @@ export default async function ReviewQueuePage({
     filter === "overspend" ? { overspendFlag: true } : filter === "duplicate" ? { duplicateFlag: true } : {};
   const items = await prisma.expense.findMany({
     where: {
+      companyId: company.id,
       status: isAdmin ? { in: ["SUBMITTED", "CONTROLLER_APPROVED"] } : isManager ? "CONTROLLER_APPROVED" : "SUBMITTED",
       ...flagWhere,
     },

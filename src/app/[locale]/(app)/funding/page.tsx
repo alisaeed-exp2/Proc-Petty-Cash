@@ -1,6 +1,6 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { prisma } from "@/lib/prisma";
-import { requireUser } from "@/lib/session";
+import { requireCompany } from "@/lib/company";
 import { getManagerSummary } from "@/lib/ledger/db";
 import { formatHalalas } from "@/lib/ledger/money";
 import { formatDate, toDateInput } from "@/lib/format";
@@ -11,13 +11,14 @@ import { recordFundingAction } from "./actions";
 export default async function FundingPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  await requireUser(locale, ["MANAGER"]);
+  const { company } = await requireCompany(locale, ["MANAGER"]);
   const t = await getTranslations("funding");
   const c = await getTranslations("common");
 
   const [summary, history] = await Promise.all([
-    getManagerSummary(),
+    getManagerSummary(company.id),
     prisma.funding.findMany({
+      where: { companyId: company.id },
       orderBy: { receivedAt: "desc" },
       take: 100,
       include: { recordedBy: { select: { name: true } } },

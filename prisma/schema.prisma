@@ -76,6 +76,19 @@ model User {
   fundingsRecorded  Funding[]
   ledgerEntries     LedgerEntry[]
   auditLogs         AuditLog[]
+  companies         UserCompany[]
+}
+
+// Which companies a user may work in. System administrators and the Group VP see all companies.
+model UserCompany {
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@id([userId, companyId])
+  @@index([companyId])
 }
 
 model Company {
@@ -88,6 +101,11 @@ model Company {
   projects Project[]
   expenses Expense[]
   scopedUsers User[] @relation("UserScope")
+  members     UserCompany[]
+  fundings    Funding[]
+  allocations Allocation[]
+  cashReturns CashReturn[]
+  ledger      LedgerEntry[]
 }
 
 model Project {
@@ -107,6 +125,8 @@ model Project {
 // Money received from Finance by the procurement manager.
 model Funding {
   id         String   @id @default(cuid())
+  companyId  String?
+  company    Company? @relation(fields: [companyId], references: [id])
   amount     Int
   receivedAt DateTime
   reference  String? // finance voucher / transfer reference
@@ -119,6 +139,8 @@ model Funding {
 // Manager -> agent.
 model Allocation {
   id        String   @id @default(cuid())
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id])
   agentId   String
   agent     User     @relation("AllocationAgent", fields: [agentId], references: [id])
   managerId String
@@ -134,6 +156,8 @@ model Allocation {
 // Agent -> manager (unspent cash handed back; goes back into the unallocated pool).
 model CashReturn {
   id        String   @id @default(cuid())
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id])
   agentId   String
   agent     User     @relation("ReturnAgent", fields: [agentId], references: [id])
   managerId String
@@ -219,6 +243,8 @@ model ExpenseReview {
 // ADJUSTMENT amount is signed and changes the agent's consumed figure.
 model LedgerEntry {
   id         String     @id @default(cuid())
+  companyId  String?
+  company    Company?   @relation(fields: [companyId], references: [id])
   type       LedgerType
   agentId    String? // null for FUNDING
   agent      User?      @relation(fields: [agentId], references: [id])
@@ -233,6 +259,7 @@ model LedgerEntry {
 
   @@index([agentId, type])
   @@index([type, occurredAt])
+  @@index([companyId])
 }
 
 model AuditLog {

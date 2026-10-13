@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { prisma } from "@/lib/prisma";
-import { requireUser } from "@/lib/session";
+import { requireCompany } from "@/lib/company";
 import { localName } from "@/lib/names";
 import { getAgentBalance } from "@/lib/ledger/db";
 import { formatHalalas } from "@/lib/ledger/money";
@@ -24,7 +24,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 export default async function ReviewDetailPage({ params }: { params: Promise<{ locale: string; id: string }> }) {
   const { locale, id } = await params;
   setRequestLocale(locale);
-  const me = await requireUser(locale, ["CONTROLLER", "MANAGER"]);
+  const { user: me, company } = await requireCompany(locale, ["CONTROLLER", "MANAGER"]);
   const t = await getTranslations("review");
   const x = await getTranslations("expenses");
   const c = await getTranslations("common");
@@ -39,9 +39,9 @@ export default async function ReviewDetailPage({ params }: { params: Promise<{ l
       reviews: { orderBy: { createdAt: "desc" }, include: { reviewer: { select: { name: true } } } },
     },
   });
-  if (!e || e.status === "DRAFT") notFound();
+  if (!e || e.status === "DRAFT" || e.companyId !== company.id) notFound();
 
-  const bal = await getAgentBalance(e.agentId);
+  const bal = await getAgentBalance(e.companyId, e.agentId);
   const canDecide =
     e.agentId !== me.id &&
     (me.role === "SYSTEM_ADMIN"

@@ -3,7 +3,7 @@ import { hasLocale } from "next-intl";
 import { routing } from "./routing";
 
 // Message files are split by area; each file holds its own top-level namespaces.
-const FILES = ["core", "nav", "admin", "money", "expenses", "review", "dash", "reports"] as const;
+const FILES = ["core", "nav", "admin", "money", "expenses", "review", "dash", "reports", "ctx"] as const;
 
 export default getRequestConfig(async ({ requestLocale }) => {
   const requested = await requestLocale;

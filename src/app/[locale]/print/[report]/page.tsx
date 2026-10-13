@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { requireUser } from "@/lib/session";
+import { companyName, requireCompany } from "@/lib/company";
 import { REPORTS, buildReport, type Cell, type Col, type Filters, type ReportKey } from "@/lib/reports";
 import { formatHalalas } from "@/lib/ledger/money";
 import { formatDate } from "@/lib/format";
@@ -33,14 +33,14 @@ export default async function PrintReportPage({
   setRequestLocale(locale);
   if (!(REPORTS as readonly string[]).includes(report)) notFound();
   const key = report as ReportKey;
-  const user = await requireUser(locale, ["MANAGER", "CONTROLLER", "AGENT"]);
+  const { user, company } = await requireCompany(locale, ["MANAGER", "CONTROLLER", "AGENT"]);
 
   const r = await getTranslations("reports");
   const x = await getTranslations("expenses");
   const data = await buildReport(
     key,
-    { role: user.role, userId: user.id },
-    { from: filters.from, to: filters.to, agentId: filters.agentId, companyId: filters.companyId },
+    { role: user.role, userId: user.id, companyId: company.id },
+    { from: filters.from, to: filters.to, agentId: filters.agentId },
     locale,
     { yes: r("yes"), type: (k) => r(`types.${k}`), status: (k) => x(`status.${k}`) },
   );
@@ -72,6 +72,7 @@ export default async function PrintReportPage({
         <img src={locale === "ar" ? "/brand/logo-ar.svg" : "/brand/logo-en.svg"} alt="" className="h-14 w-auto" />
         <div className="text-end">
           <h1 className="font-display text-2xl font-semibold text-ocean">{r(`names.${key}`)}</h1>
+          <p className="text-sm font-medium">{companyName(company, locale)}</p>
           <p className="mt-1 text-xs text-muted">
             {r("generated")}: {formatDate(new Date(), locale)} · {r("period")}: <span className="num">{period}</span> · {r("currencyNote")}
           </p>

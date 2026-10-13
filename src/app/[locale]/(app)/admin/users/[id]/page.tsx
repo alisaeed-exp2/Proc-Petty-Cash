@@ -5,7 +5,8 @@ import { requireUser } from "@/lib/session";
 import { ActionForm } from "@/components/action-form";
 import { Link } from "@/i18n/navigation";
 import { Card, PageHeader, btnSecondary, inputCls, labelCls } from "@/components/ui";
-import { resetPasswordAction, toggleUserActiveAction, updateUserAction } from "../actions";
+import { CompanyCheckboxes } from "@/components/company-checkboxes";
+import { resetPasswordAction, setUserCompaniesAction, toggleUserActiveAction, updateUserAction } from "../actions";
 
 export default async function EditUserPage({ params }: { params: Promise<{ locale: string; id: string }> }) {
   const { locale, id } = await params;
@@ -15,7 +16,12 @@ export default async function EditUserPage({ params }: { params: Promise<{ local
   const roles = await getTranslations("roles");
   const c = await getTranslations("common");
 
-  const u = await prisma.user.findUnique({ where: { id } });
+  const [u, allCompanies, memberships] = await Promise.all([
+    prisma.user.findUnique({ where: { id } }),
+    prisma.company.findMany({ where: { active: true }, orderBy: { code: "asc" } }),
+    prisma.userCompany.findMany({ where: { userId: id }, select: { companyId: true } }),
+  ]);
+  const x = await getTranslations("ctx");
   if (!u) notFound();
   const small = `${btnSecondary} !px-3 !py-1.5 !text-xs`;
 
@@ -59,6 +65,18 @@ export default async function EditUserPage({ params }: { params: Promise<{ local
               </div>
             </div>
           </ActionForm>
+        </Card>
+        <Card title={x("userCompanies")} className="lg:col-span-2">
+          {u.role === "SYSTEM_ADMIN" || u.role === "GROUP_VP" ? (
+            <p className="text-sm text-muted">{x("allCompaniesNote")}</p>
+          ) : allCompanies.length === 0 ? (
+            <p className="text-sm text-muted">{x("noCompanyYet")}</p>
+          ) : (
+            <ActionForm action={setUserCompaniesAction.bind(null, u.id)} namespace="ctx" submit={x("saveCompanies")}>
+              <CompanyCheckboxes companies={allCompanies} selected={memberships.map((m) => m.companyId)} locale={locale} />
+              <p className="text-xs text-muted">{x("userCompaniesHint")}</p>
+            </ActionForm>
+          )}
         </Card>
         <Card>
           <div className="space-y-3">

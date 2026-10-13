@@ -1,5 +1,7 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { requireUser } from "@/lib/session";
+import { companyName, getActiveCompany, getAllowedCompanies } from "@/lib/company";
+import { CompanySwitcher } from "@/components/company-switcher";
 import { navFor } from "@/lib/nav";
 import { BrandLogo } from "@/components/brand-logo";
 import { LanguageToggle } from "@/components/language-toggle";
@@ -17,6 +19,8 @@ export default async function AppLayout({
   const { locale } = await params;
   setRequestLocale(locale);
   const user = await requireUser(locale);
+
+  const [allowed, active] = await Promise.all([getAllowedCompanies(user.id, user.role), getActiveCompany(user.id, user.role)]);
 
   const t = await getTranslations("nav");
   const roles = await getTranslations("roles");
@@ -54,7 +58,18 @@ export default async function AppLayout({
         </div>
       </aside>
 
-      <main className="min-w-0 px-4 py-6 sm:px-8 lg:py-8">{children}</main>
+      <div className="min-w-0">
+        <header className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-line bg-white/95 px-4 py-2.5 backdrop-blur sm:px-8">
+          <CompanySwitcher
+            locale={locale}
+            companies={allowed.map((c) => ({ id: c.id, name: companyName(c, locale) }))}
+            currentId={active?.id ?? null}
+            currentName={active ? companyName(active, locale) : null}
+          />
+          <span className="hidden text-xs text-muted sm:inline">{user.name}</span>
+        </header>
+        <main className="px-4 py-6 sm:px-8 lg:py-8">{children}</main>
+      </div>
     </div>
   );
 }

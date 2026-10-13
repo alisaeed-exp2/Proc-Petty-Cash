@@ -34,7 +34,9 @@
       "noAgents": "No purchase agents yet.",
       "noData": "Nothing to show yet.",
       "awaitingNote": "{count, plural, one {# invoice is} other {# invoices are}} waiting for your final approval.",
-      "openApprovals": "Open approvals"
+      "openApprovals": "Open approvals",
+      "byProject": "Consumption by project / location / department",
+      "noProject": "No project / location / department"
     },
     "controller": {
       "waiting": "Waiting for review",

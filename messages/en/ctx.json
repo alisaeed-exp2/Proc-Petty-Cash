@@ -1,0 +1,27 @@
+{
+  "ctx": {
+    "company": "Company",
+    "switch": "Switch company",
+    "choose": "Choose a company",
+    "noneSelected": "No company selected",
+    "chooseTitle": "Choose a company",
+    "chooseSubtitle": "Everything you see and create is under the company you work in. You can switch at any time from the top bar.",
+    "none": "You are not assigned to any company yet. Ask the administrator to assign you.",
+    "workIn": "Work in this company",
+    "continueWith": "Continue in this company",
+    "userCompanies": "Companies",
+    "userCompaniesHint": "The companies this user can work in.",
+    "allCompaniesNote": "This role has access to all companies automatically.",
+    "noCompanyYet": "No companies exist yet. Add one under Companies first.",
+    "saveCompanies": "Save companies",
+    "info": {
+      "saved": "Companies saved."
+    },
+    "errors": {
+      "unauthorized": "You are not allowed to do that.",
+      "notFound": "User not found.",
+      "needOne": "Assign at least one company to this user."
+    },
+    "all": "All"
+  }
+}

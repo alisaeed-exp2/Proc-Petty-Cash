@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { getActionUser } from "@/lib/session";
+import { getActionContext } from "@/lib/company";
 import { audit } from "@/lib/audit";
 import { parseSarToHalalas } from "@/lib/ledger/money";
 import { parseDateInput } from "@/lib/format";
@@ -17,8 +17,10 @@ const schema = z.object({
 });
 
 export async function recordFundingAction(_prev: FormState, formData: FormData): Promise<FormState> {
-  const me = await getActionUser(["MANAGER"]);
-  if (!me) return { ok: false, error: "unauthorized" };
+  const ctx = await getActionContext(["MANAGER"]);
+  if (!ctx) return { ok: false, error: "unauthorized" };
+  const me = ctx.user;
+  const companyId = ctx.company.id;
 
   const parsed = schema.safeParse({
     amount: formData.get("amount"),
@@ -36,6 +38,7 @@ export async function recordFundingAction(_prev: FormState, formData: FormData):
   await prisma.$transaction(async (tx) => {
     const f = await tx.funding.create({
       data: {
+        companyId,
         amount,
         receivedAt,
         reference: parsed.data.reference ?? null,
@@ -44,7 +47,7 @@ export async function recordFundingAction(_prev: FormState, formData: FormData):
       },
     });
     await tx.ledgerEntry.create({
-      data: { type: "FUNDING", amount, occurredAt: receivedAt, sourceId: f.id, note: parsed.data.reference ?? null },
+      data: { type: "FUNDING", companyId, amount, occurredAt: receivedAt, sourceId: f.id, note: parsed.data.reference ?? null },
     });
     await audit(me.id, "funding.record", "Funding", f.id, { amount }, tx);
   });

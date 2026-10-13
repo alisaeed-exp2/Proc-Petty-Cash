@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
 import { getObject, storageConfigured } from "@/lib/storage";
 import { canSeeRecords } from "@/lib/access";
+import { getAllowedCompanies } from "@/lib/company";
 
 export const dynamic = "force-dynamic";
 
@@ -14,10 +15,12 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const { id } = await params;
   const file = await prisma.expenseFile.findUnique({
     where: { id },
-    include: { expense: { select: { agentId: true } } },
+    include: { expense: { select: { agentId: true, companyId: true } } },
   });
   if (!file) return new Response("Not found", { status: 404 });
   if (user.role === "AGENT" && file.expense.agentId !== user.id) return new Response("Forbidden", { status: 403 });
+  const allowed = await getAllowedCompanies(user.id, user.role);
+  if (!allowed.some((c) => c.id === file.expense.companyId)) return new Response("Forbidden", { status: 403 });
   if (!storageConfigured()) return new Response("Storage not configured", { status: 503 });
 
   try {

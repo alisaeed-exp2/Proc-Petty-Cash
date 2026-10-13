@@ -1,5 +1,5 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { requireUser } from "@/lib/session";
+import { requireCompany } from "@/lib/company";
 import { buildReport, type Filters } from "@/lib/reports";
 import { formatHalalas } from "@/lib/ledger/money";
 import { formatDate } from "@/lib/format";
@@ -18,15 +18,15 @@ export default async function ConsumptionPage({
   const { locale } = await params;
   const filters = await searchParams;
   setRequestLocale(locale);
-  const user = await requireUser(locale, ["MANAGER", "CONTROLLER"]);
+  const { user, company } = await requireCompany(locale, ["MANAGER", "CONTROLLER"]);
   const r = await getTranslations("reports");
   const x = await getTranslations("expenses");
   const c = await getTranslations("common");
 
   const data = await buildReport(
     "consumption",
-    { role: user.role, userId: user.id },
-    { from: filters.from, to: filters.to, agentId: filters.agentId, companyId: filters.companyId },
+    { role: user.role, userId: user.id, companyId: company.id },
+    { from: filters.from, to: filters.to, agentId: filters.agentId },
     locale,
     { yes: r("yes"), type: (k) => r(`types.${k}`), status: (k) => x(`status.${k}`) },
   );
@@ -44,7 +44,7 @@ export default async function ConsumptionPage({
           </>
         }
       />
-      <ReportFilters action="/consumption" filters={filters} showAgent locale={locale} />
+      <ReportFilters action="/consumption" filters={filters} showAgent companyId={company.id} />
 
       <div className="mb-6 grid gap-4 sm:grid-cols-2">
         <Stat label={r("count")} value={String(data.rows.length)} />

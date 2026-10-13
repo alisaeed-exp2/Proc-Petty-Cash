@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { getActionUser } from "@/lib/session";
+import { getActionContext } from "@/lib/company";
 import { audit } from "@/lib/audit";
 import { redirect } from "@/i18n/navigation";
 import { parseSarToHalalas } from "@/lib/ledger/money";
@@ -31,15 +31,16 @@ async function checkCompanyProject(companyId: string, projectId: string | null) 
 }
 
 export async function createExpenseAction(_prev: FormState, formData: FormData): Promise<FormState> {
-  const me = await getActionUser(["AGENT"]);
-  if (!me) return { ok: false, error: "unauthorized" };
+  const ctx = await getActionContext(["AGENT"]);
+  if (!ctx) return { ok: false, error: "unauthorized" };
+  const me = ctx.user;
   if (!storageConfigured()) return { ok: false, error: "storage" };
 
   const locale = formData.get("locale") === "ar" ? "ar" : "en";
-  const companyId = String(formData.get("companyId") ?? "");
+  // Every record is created under the company the agent is currently working in.
+  const companyId = ctx.company.id;
   const projectId = String(formData.get("projectId") ?? "") || null;
   const notes = String(formData.get("notes") ?? "").trim().slice(0, 500) || null;
-  if (!companyId) return { ok: false, error: "badCompany" };
   const cp = await checkCompanyProject(companyId, projectId);
   if (cp) return { ok: false, error: cp };
 
@@ -82,7 +83,6 @@ export async function createExpenseAction(_prev: FormState, formData: FormData):
 }
 
 const fieldsSchema = z.object({
-  companyId: z.string().min(1),
   projectId: z.string().optional(),
   vendorName: z.string().trim().max(200).optional(),
   vendorVatNo: z.string().trim().max(30).optional(),
@@ -100,16 +100,16 @@ function opt(v: FormDataEntryValue | null): string | undefined {
 }
 
 export async function saveExpenseAction(expenseId: string, _prev: FormState, formData: FormData): Promise<FormState> {
-  const me = await getActionUser(["AGENT"]);
-  if (!me) return { ok: false, error: "unauthorized" };
+  const ctx = await getActionContext(["AGENT"]);
+  if (!ctx) return { ok: false, error: "unauthorized" };
+  const me = ctx.user;
 
-  const expense = await prisma.expense.findFirst({ where: { id: expenseId, agentId: me.id } });
+  const expense = await prisma.expense.findFirst({ where: { id: expenseId, agentId: me.id, companyId: ctx.company.id } });
   if (!expense) return { ok: false, error: "notFound" };
   if (expense.status !== "DRAFT" && expense.status !== "REJECTED") return { ok: false, error: "notEditable" };
 
   const submit = formData.get("intent") === "submit";
   const parsed = fieldsSchema.safeParse({
-    companyId: opt(formData.get("companyId")),
     projectId: opt(formData.get("projectId")),
     vendorName: opt(formData.get("vendorName")),
     vendorVatNo: opt(formData.get("vendorVatNo")),
@@ -123,7 +123,7 @@ export async function saveExpenseAction(expenseId: string, _prev: FormState, for
   if (!parsed.success) return { ok: false, error: "invalid" };
   const d = parsed.data;
 
-  const cp = await checkCompanyProject(d.companyId, d.projectId ?? null);
+  const cp = await checkCompanyProject(expense.companyId, d.projectId ?? null);
   if (cp) return { ok: false, error: cp };
 
   let subtotal: number | null = null;
@@ -154,7 +154,6 @@ export async function saveExpenseAction(expenseId: string, _prev: FormState, for
   if ("error" in stored) return { ok: false, error: stored.error };
 
   const base = {
-    companyId: d.companyId,
     projectId: d.projectId ?? null,
     vendorName: d.vendorName ?? null,
     vendorVatNo: vatNo,
@@ -173,7 +172,7 @@ export async function saveExpenseAction(expenseId: string, _prev: FormState, for
   }
 
   // Flags are decided at the moment of submission.
-  const bal = await getAgentBalance(me.id);
+  const bal = await getAgentBalance(expense.companyId, me.id);
   const overspendFlag = isOverspend(total as number, bal.available);
 
   const key = duplicateKey(vatNo, d.invoiceNumber, total);
@@ -223,10 +222,11 @@ export async function saveExpenseAction(expenseId: string, _prev: FormState, for
 
 /** Agents may delete their own drafts that were never submitted. */
 export async function deleteDraftAction(expenseId: string, _prev: FormState, formData: FormData): Promise<FormState> {
-  const me = await getActionUser(["AGENT"]);
-  if (!me) return { ok: false, error: "unauthorized" };
+  const ctx = await getActionContext(["AGENT"]);
+  if (!ctx) return { ok: false, error: "unauthorized" };
+  const me = ctx.user;
   const expense = await prisma.expense.findFirst({
-    where: { id: expenseId, agentId: me.id },
+    where: { id: expenseId, agentId: me.id, companyId: ctx.company.id },
     include: { files: true, _count: { select: { reviews: true } } },
   });
   if (!expense) return { ok: false, error: "notFound" };

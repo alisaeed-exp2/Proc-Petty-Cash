@@ -1,6 +1,6 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { prisma } from "@/lib/prisma";
-import { requireUser } from "@/lib/session";
+import { requireCompany } from "@/lib/company";
 import { localName } from "@/lib/names";
 import { getAgentBalance } from "@/lib/ledger/db";
 import { formatHalalas } from "@/lib/ledger/money";
@@ -19,14 +19,14 @@ export default async function MyExpensesPage({
   const { locale } = await params;
   const { submitted } = await searchParams;
   setRequestLocale(locale);
-  const user = await requireUser(locale, ["AGENT"]);
+  const { user, company } = await requireCompany(locale, ["AGENT"]);
   const t = await getTranslations("expenses");
   const c = await getTranslations("common");
 
   const [bal, expenses] = await Promise.all([
-    getAgentBalance(user.id),
+    getAgentBalance(company.id, user.id),
     prisma.expense.findMany({
-      where: { agentId: user.id },
+      where: { agentId: user.id, companyId: company.id },
       orderBy: { createdAt: "desc" },
       include: { company: true, project: true },
     }),

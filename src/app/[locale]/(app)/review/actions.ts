@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import type { ExpenseStatus, ReviewStage } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { getActionUser, type AppUser } from "@/lib/session";
+import { type AppUser } from "@/lib/session";
+import { getActionContext } from "@/lib/company";
 import { audit } from "@/lib/audit";
 import { redirect } from "@/i18n/navigation";
 import { canReview } from "@/lib/ledger/balances";
@@ -27,9 +28,9 @@ function stepFor(me: AppUser, status: ExpenseStatus): { stage: ReviewStage; from
 }
 
 /** Returns an error key, or null on success. */
-async function decideOne(me: AppUser, expenseId: string, approve: boolean, reason: string): Promise<string | null> {
+async function decideOne(me: AppUser, companyId: string, expenseId: string, approve: boolean, reason: string): Promise<string | null> {
   const expense = await prisma.expense.findUnique({ where: { id: expenseId } });
-  if (!expense) return "notFound";
+  if (!expense || expense.companyId !== companyId) return "notFound";
   const step = stepFor(me, expense.status);
   if (!step || expense.status !== step.from) return "alreadyReviewed";
   if (!canReview(me.id, expense.agentId)) return "ownExpense";
@@ -49,6 +50,7 @@ async function decideOne(me: AppUser, expenseId: string, approve: boolean, reaso
       await tx.ledgerEntry.create({
         data: {
           type: "EXPENSE",
+          companyId: expense.companyId,
           agentId: expense.agentId,
           amount: expense.total as number,
           occurredAt: expense.invoiceDate ?? new Date(),
@@ -73,8 +75,9 @@ async function decideOne(me: AppUser, expenseId: string, approve: boolean, reaso
 }
 
 export async function reviewAction(expenseId: string, _prev: FormState, formData: FormData): Promise<FormState> {
-  const me = await getActionUser(["CONTROLLER", "MANAGER"]);
-  if (!me) return { ok: false, error: "unauthorized" };
+  const ctx = await getActionContext(["CONTROLLER", "MANAGER"]);
+  if (!ctx) return { ok: false, error: "unauthorized" };
+  const me = ctx.user;
 
   const intent = formData.get("intent");
   const reason = String(formData.get("reason") ?? "").trim().slice(0, 500);
@@ -83,7 +86,7 @@ export async function reviewAction(expenseId: string, _prev: FormState, formData
   if (intent === "reject" && reason.length < 3) return { ok: false, error: "reasonRequired" };
 
   const approve = intent === "approve";
-  const err = await decideOne(me, expenseId, approve, reason);
+  const err = await decideOne(me, ctx.company.id, expenseId, approve, reason);
   if (err) return { ok: false, error: err };
 
   revalidatePath("/", "layout");
@@ -93,15 +96,16 @@ export async function reviewAction(expenseId: string, _prev: FormState, formData
 
 /** Approves several expenses at once. Anything not eligible is skipped and counted. */
 export async function bulkApproveAction(_prev: FormState, formData: FormData): Promise<FormState> {
-  const me = await getActionUser(["CONTROLLER", "MANAGER"]);
-  if (!me) return { ok: false, error: "unauthorized" };
+  const ctx = await getActionContext(["CONTROLLER", "MANAGER"]);
+  if (!ctx) return { ok: false, error: "unauthorized" };
+  const me = ctx.user;
   const locale = formData.get("locale") === "ar" ? "ar" : "en";
   const ids = [...new Set(formData.getAll("ids").map(String).filter(Boolean))].slice(0, 100);
   if (ids.length === 0) return { ok: false, error: "nothingSelected" };
 
   let approved = 0;
   for (const id of ids) {
-    const err = await decideOne(me, id, true, "");
+    const err = await decideOne(me, ctx.company.id, id, true, "");
     if (!err) approved += 1;
   }
   revalidatePath("/", "layout");

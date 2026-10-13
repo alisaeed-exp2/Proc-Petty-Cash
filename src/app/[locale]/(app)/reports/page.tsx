@@ -1,5 +1,5 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { requireUser } from "@/lib/session";
+import { requireCompany } from "@/lib/company";
 import { REPORTS, type Filters } from "@/lib/reports";
 import { Card, PageHeader, btnPrimary, btnSecondary } from "@/components/ui";
 import { ReportFilters, exportHref, pdfHref } from "@/components/report-filters";
@@ -14,13 +14,13 @@ export default async function ReportsPage({
   const { locale } = await params;
   const filters = await searchParams;
   setRequestLocale(locale);
-  const user = await requireUser(locale, ["MANAGER", "CONTROLLER", "AGENT"]);
+  const { user, company } = await requireCompany(locale, ["MANAGER", "CONTROLLER", "AGENT"]);
   const r = await getTranslations("reports");
 
   return (
     <>
       <PageHeader title={r("title")} subtitle={user.role === "AGENT" ? r("subtitleAgent") : r("subtitle")} />
-      <ReportFilters action="/reports" filters={filters} showAgent={user.role !== "AGENT"} locale={locale} />
+      <ReportFilters action="/reports" filters={filters} showAgent={user.role !== "AGENT"} companyId={company.id} />
       <div className="grid gap-4 md:grid-cols-2">
         {REPORTS.map((key) => (
           <Card key={key} title={r(`names.${key}`)}>

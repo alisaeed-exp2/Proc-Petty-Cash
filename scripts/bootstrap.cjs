@@ -16,6 +16,34 @@ function run(cmd) {
 async function main() {
   run("npx prisma db push --skip-generate");
 
+  // One-time move to company-scoped data: records created before companies were introduced
+  // go to the oldest company, and every existing user gets access to it.
+  {
+    const db = new PrismaClient();
+    try {
+      const first = await db.company.findFirst({ orderBy: { id: "asc" } });
+      if (first) {
+        const [f, a, r, l] = await Promise.all([
+          db.funding.updateMany({ where: { companyId: null }, data: { companyId: first.id } }),
+          db.allocation.updateMany({ where: { companyId: null }, data: { companyId: first.id } }),
+          db.cashReturn.updateMany({ where: { companyId: null }, data: { companyId: first.id } }),
+          db.ledgerEntry.updateMany({ where: { companyId: null }, data: { companyId: first.id } }),
+        ]);
+        const moved = f.count + a.count + r.count + l.count;
+        if (moved) console.log("Assigned " + moved + " existing records to company " + first.code);
+        if ((await db.userCompany.count()) === 0) {
+          const users = await db.user.findMany({ select: { id: true } });
+          if (users.length) {
+            await db.userCompany.createMany({ data: users.map((u) => ({ userId: u.id, companyId: first.id })), skipDuplicates: true });
+            console.log("Gave " + users.length + " existing users access to company " + first.code);
+          }
+        }
+      }
+    } finally {
+      await db.$disconnect();
+    }
+  }
+
   // One-off promotion: set PROMOTE_TO_SYSTEM_ADMIN=<email> for a deploy, then remove it.
   // Equivalent to: UPDATE "User" SET role = 'SYSTEM_ADMIN' WHERE email = '<email>';
   const promote = (process.env.PROMOTE_TO_SYSTEM_ADMIN || "").trim().toLowerCase();

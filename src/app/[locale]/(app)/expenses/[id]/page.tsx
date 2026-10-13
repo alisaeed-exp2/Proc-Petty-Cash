@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { prisma } from "@/lib/prisma";
-import { requireUser } from "@/lib/session";
+import { requireCompany } from "@/lib/company";
 import { localName } from "@/lib/names";
 import { formatHalalas } from "@/lib/ledger/money";
 import { formatDate, toDateInput } from "@/lib/format";
@@ -33,12 +33,12 @@ export default async function ExpensePage({
   const { locale, id } = await params;
   const { ocr } = await searchParams;
   setRequestLocale(locale);
-  const user = await requireUser(locale, ["AGENT"]);
+  const { user, company } = await requireCompany(locale, ["AGENT"]);
   const t = await getTranslations("expenses");
   const c = await getTranslations("common");
 
   const e = await prisma.expense.findFirst({
-    where: { id, agentId: user.id },
+    where: { id, agentId: user.id, companyId: company.id },
     include: {
       company: true,
       project: true,
@@ -51,18 +51,13 @@ export default async function ExpensePage({
   const editable = e.status === "DRAFT" || e.status === "REJECTED";
   const lastRejection = e.reviews.find((r) => r.decision === "REJECTED");
 
-  let companies: { id: string; name: string; projects: { id: string; name: string }[] }[] = [];
+  let projects: { id: string; name: string }[] = [];
   if (editable) {
-    const list = await prisma.company.findMany({
-      where: { OR: [{ active: true }, { id: e.companyId }] },
+    const list = await prisma.project.findMany({
+      where: { companyId: e.companyId, OR: [{ active: true }, { id: e.projectId ?? "" }] },
       orderBy: { code: "asc" },
-      include: { projects: { where: { OR: [{ active: true }, { id: e.projectId ?? "" }] }, orderBy: { code: "asc" } } },
     });
-    companies = list.map((co) => ({
-      id: co.id,
-      name: localName(co, locale),
-      projects: co.projects.map((p) => ({ id: p.id, name: localName(p, locale) })),
-    }));
+    projects = list.map((p) => ({ id: p.id, name: localName(p, locale) }));
   }
 
   return (
@@ -96,7 +91,8 @@ export default async function ExpensePage({
             {editable ? (
               <ExpenseEditForm
                 action={saveExpenseAction.bind(null, e.id)}
-                companies={companies}
+                companyName={localName(e.company, locale)}
+                projects={projects}
                 locale={locale}
                 rejected={e.status === "REJECTED"}
                 values={{

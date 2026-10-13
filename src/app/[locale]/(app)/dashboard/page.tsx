@@ -1,6 +1,7 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { prisma } from "@/lib/prisma";
-import { requireUser, type AppUser } from "@/lib/session";
+import { type AppUser } from "@/lib/session";
+import { requireCompany } from "@/lib/company";
 import { localName } from "@/lib/names";
 import { getAgentBalance, getAllAgentBalances, getManagerSummary } from "@/lib/ledger/db";
 import { formatHalalas } from "@/lib/ledger/money";
@@ -14,27 +15,27 @@ type T = (key: string, values?: Record<string, string | number>) => string;
 export default async function DashboardPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const user = await requireUser(locale);
+  const { user, company } = await requireCompany(locale);
   const t = await getTranslations("dash");
   const c = await getTranslations("common");
 
   return (
     <>
       <PageHeader title={t("title")} subtitle={t("welcome", { name: user.name })} />
-      {user.role === "AGENT" && <AgentDashboard user={user} locale={locale} t={t} c={c} />}
-      {(user.role === "MANAGER" || user.role === "SYSTEM_ADMIN") && <ManagerDashboard locale={locale} t={t} c={c} />}
-      {user.role === "GROUP_VP" && <ManagerDashboard locale={locale} t={t} c={c} readOnly />}
-      {user.role === "CONTROLLER" && <ControllerDashboard locale={locale} t={t} c={c} />}
+      {user.role === "AGENT" && <AgentDashboard user={user} companyId={company.id} locale={locale} t={t} c={c} />}
+      {(user.role === "MANAGER" || user.role === "SYSTEM_ADMIN") && <ManagerDashboard companyId={company.id} locale={locale} t={t} c={c} />}
+      {user.role === "GROUP_VP" && <ManagerDashboard companyId={company.id} locale={locale} t={t} c={c} readOnly />}
+      {user.role === "CONTROLLER" && <ControllerDashboard companyId={company.id} locale={locale} t={t} c={c} />}
     </>
   );
 }
 
-async function AgentDashboard({ user, locale, t, c }: { user: AppUser; locale: string; t: T; c: T }) {
+async function AgentDashboard({ user, companyId, locale, t, c }: { user: AppUser; companyId: string; locale: string; t: T; c: T }) {
   const x = await getTranslations("expenses");
   const [bal, recent, counts] = await Promise.all([
-    getAgentBalance(user.id),
-    prisma.expense.findMany({ where: { agentId: user.id }, orderBy: { createdAt: "desc" }, take: 6, include: { company: true } }),
-    prisma.expense.groupBy({ by: ["status"], where: { agentId: user.id }, _count: true }),
+    getAgentBalance(companyId, user.id),
+    prisma.expense.findMany({ where: { agentId: user.id, companyId }, orderBy: { createdAt: "desc" }, take: 6, include: { company: true } }),
+    prisma.expense.groupBy({ by: ["status"], where: { agentId: user.id, companyId }, _count: true }),
   ]);
   const count = (s: string) =>
     s === "SUBMITTED"
@@ -117,16 +118,16 @@ async function AgentDashboard({ user, locale, t, c }: { user: AppUser; locale: s
   );
 }
 
-async function ManagerDashboard({ locale, t, c, readOnly = false }: { locale: string; t: T; c: T; readOnly?: boolean }) {
-  const [summary, agents, pendingFlags, awaitingMe, byCompany, companies, expenseEntries] = await Promise.all([
-    getManagerSummary(),
-    getAllAgentBalances(),
-    prisma.expense.groupBy({ by: ["overspendFlag", "duplicateFlag"], where: { status: { in: ["SUBMITTED", "CONTROLLER_APPROVED"] } }, _count: true }),
-    prisma.expense.count({ where: { status: "CONTROLLER_APPROVED" } }),
-    prisma.expense.groupBy({ by: ["companyId"], where: { status: "APPROVED" }, _sum: { total: true } }),
-    prisma.company.findMany({ select: { id: true, nameEn: true, nameAr: true } }),
+async function ManagerDashboard({ companyId, locale, t, c, readOnly = false }: { companyId: string; locale: string; t: T; c: T; readOnly?: boolean }) {
+  const [summary, agents, pendingFlags, awaitingMe, byProject, projects, expenseEntries] = await Promise.all([
+    getManagerSummary(companyId),
+    getAllAgentBalances(companyId),
+    prisma.expense.groupBy({ by: ["overspendFlag", "duplicateFlag"], where: { companyId, status: { in: ["SUBMITTED", "CONTROLLER_APPROVED"] } }, _count: true }),
+    prisma.expense.count({ where: { companyId, status: "CONTROLLER_APPROVED" } }),
+    prisma.expense.groupBy({ by: ["projectId"], where: { companyId, status: "APPROVED" }, _sum: { total: true } }),
+    prisma.project.findMany({ where: { companyId }, select: { id: true, nameEn: true, nameAr: true } }),
     prisma.ledgerEntry.findMany({
-      where: { type: { in: ["EXPENSE", "ADJUSTMENT"] }, occurredAt: { gte: new Date(Date.now() - 200 * 24 * 3600 * 1000) } },
+      where: { companyId, type: { in: ["EXPENSE", "ADJUSTMENT"] }, occurredAt: { gte: new Date(Date.now() - 200 * 24 * 3600 * 1000) } },
       select: { amount: true, occurredAt: true },
     }),
   ]);
@@ -144,9 +145,9 @@ async function ManagerDashboard({ locale, t, c, readOnly = false }: { locale: st
     if (monthTotals.has(k)) monthTotals.set(k, (monthTotals.get(k) ?? 0) + e.amount);
   }
 
-  const companyName = new Map(companies.map((co) => [co.id, localName(co, locale)]));
-  const companyBars = byCompany
-    .map((r) => ({ label: companyName.get(r.companyId) ?? "-", value: r._sum.total ?? 0 }))
+  const projectName = new Map(projects.map((p) => [p.id, localName(p, locale)]));
+  const companyBars = byProject
+    .map((r) => ({ label: r.projectId ? (projectName.get(r.projectId) ?? "-") : t("manager.noProject"), value: r._sum.total ?? 0 }))
     .filter((r) => r.value > 0)
     .sort((a, b) => b.value - a.value)
     .slice(0, 8);
@@ -181,7 +182,7 @@ async function ManagerDashboard({ locale, t, c, readOnly = false }: { locale: st
         <Card title={t("manager.monthly")}>
           <MonthBars items={months.map((m) => ({ label: m.slice(2), value: monthTotals.get(m) ?? 0 }))} />
         </Card>
-        <Card title={t("manager.byCompany")}>
+        <Card title={t("manager.byProject")}>
           {companyBars.length === 0 ? <Empty>{t("manager.noData")}</Empty> : <BarList items={companyBars} unit={c("currency")} />}
         </Card>
       </div>
@@ -231,14 +232,15 @@ async function ManagerDashboard({ locale, t, c, readOnly = false }: { locale: st
   );
 }
 
-async function ControllerDashboard({ locale, t, c }: { locale: string; t: T; c: T }) {
+async function ControllerDashboard({ companyId, locale, t, c }: { companyId: string; locale: string; t: T; c: T }) {
   const x = await getTranslations("expenses");
   const [pending, oldest, approved, rejected, recent] = await Promise.all([
-    prisma.expense.findMany({ where: { status: "SUBMITTED" }, select: { total: true, overspendFlag: true, duplicateFlag: true } }),
-    prisma.expense.findFirst({ where: { status: "SUBMITTED" }, orderBy: { submittedAt: "asc" }, select: { submittedAt: true } }),
-    prisma.expenseReview.count({ where: { decision: "APPROVED" } }),
-    prisma.expenseReview.count({ where: { decision: "REJECTED" } }),
+    prisma.expense.findMany({ where: { companyId, status: "SUBMITTED" }, select: { total: true, overspendFlag: true, duplicateFlag: true } }),
+    prisma.expense.findFirst({ where: { companyId, status: "SUBMITTED" }, orderBy: { submittedAt: "asc" }, select: { submittedAt: true } }),
+    prisma.expenseReview.count({ where: { decision: "APPROVED", expense: { companyId } } }),
+    prisma.expenseReview.count({ where: { decision: "REJECTED", expense: { companyId } } }),
     prisma.expenseReview.findMany({
+      where: { expense: { companyId } },
       orderBy: { createdAt: "desc" },
       take: 8,
       include: { expense: { select: { id: true, vendorName: true, total: true } }, reviewer: { select: { name: true } } },

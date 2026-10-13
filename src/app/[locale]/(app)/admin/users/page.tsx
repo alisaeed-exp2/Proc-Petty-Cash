@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/session";
 import { formatDate } from "@/lib/format";
 import { Link } from "@/i18n/navigation";
 import { ActionForm } from "@/components/action-form";
+import { CompanyCheckboxes } from "@/components/company-checkboxes";
 import { Badge, Card, PageHeader, Table, btnSecondary, inputCls, labelCls, td, th } from "@/components/ui";
 import { createUserAction, resetPasswordAction, toggleUserActiveAction } from "./actions";
 
@@ -15,9 +16,14 @@ export default async function UsersPage({ params }: { params: Promise<{ locale: 
   const roles = await getTranslations("roles");
   const c = await getTranslations("common");
 
-  const users = await prisma.user.findMany({
-    orderBy: [{ active: "desc" }, { role: "asc" }, { name: "asc" }],
-  });
+  const [users, allCompanies] = await Promise.all([
+    prisma.user.findMany({
+      orderBy: [{ active: "desc" }, { role: "asc" }, { name: "asc" }],
+      include: { companies: { include: { company: { select: { code: true } } } } },
+    }),
+    prisma.company.findMany({ where: { active: true }, orderBy: { code: "asc" } }),
+  ]);
+  const x = await getTranslations("ctx");
 
   return (
     <>
@@ -31,6 +37,7 @@ export default async function UsersPage({ params }: { params: Promise<{ locale: 
                 <th className={th}>{c("name")}</th>
                 <th className={th}>{c("email")}</th>
                 <th className={th}>{t("users.role")}</th>
+                <th className={th}>{x("userCompanies")}</th>
                 <th className={th}>{c("status")}</th>
                 <th className={th}>{t("users.created")}</th>
                 <th className={th}>{c("actions")}</th>
@@ -45,6 +52,9 @@ export default async function UsersPage({ params }: { params: Promise<{ locale: 
                   </td>
                   <td className={`${td} num`} dir="ltr">{u.email}</td>
                   <td className={td}>{roles(u.role)}</td>
+                  <td className={`${td} text-xs`}>
+                    {u.role === "SYSTEM_ADMIN" || u.role === "GROUP_VP" ? x("all") : u.companies.map((m) => m.company.code).join(", ") || "-"}
+                  </td>
                   <td className={td}>
                     <Badge tone={u.active ? "APPROVED" : "DRAFT"}>{u.active ? c("active") : c("inactive")}</Badge>
                   </td>
@@ -104,6 +114,15 @@ export default async function UsersPage({ params }: { params: Promise<{ locale: 
                 </select>
               </div>
             </div>
+            <fieldset>
+              <legend className={labelCls}>{x("userCompanies")}</legend>
+              {allCompanies.length === 0 ? (
+                <p className="text-xs text-muted">{x("noCompanyYet")}</p>
+              ) : (
+                <CompanyCheckboxes companies={allCompanies} locale={locale} />
+              )}
+              <p className="mt-1 text-xs text-muted">{x("userCompaniesHint")}</p>
+            </fieldset>
             <p className="text-xs text-muted">{t("users.tempNote")}</p>
           </ActionForm>
         </Card>

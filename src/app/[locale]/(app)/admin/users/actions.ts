@@ -32,8 +32,15 @@ export async function createUserAction(_prev: FormState, formData: FormData): Pr
   if (await prisma.user.findUnique({ where: { email: data.email } })) return { ok: false, error: "emailTaken" };
 
   const temp = generateTempPassword();
+  const requested = formData.getAll("companyIds").map(String).filter(Boolean);
+  const valid = requested.length ? await prisma.company.findMany({ where: { id: { in: requested } }, select: { id: true } }) : [];
   const user = await prisma.user.create({
-    data: { ...data, passwordHash: await bcrypt.hash(temp, 12), mustChangePassword: true },
+    data: {
+      ...data,
+      passwordHash: await bcrypt.hash(temp, 12),
+      mustChangePassword: true,
+      companies: { create: valid.map((c) => ({ companyId: c.id })) },
+    },
   });
   await audit(me.id, "user.create", "User", user.id, { email: user.email, role: user.role });
   revalidatePath("/", "layout");
@@ -120,6 +127,25 @@ export async function updateUserAction(userId: string, _prev: FormState, formDat
 
   await prisma.user.update({ where: { id: userId }, data });
   await audit(me.id, "user.update", "User", userId, { from: { email: target.email, role: target.role }, to: { email: data.email, role: data.role } });
+  revalidatePath("/", "layout");
+  return { ok: true, error: null, info: "saved" };
+}
+
+/** Replaces the set of companies a user can work in. */
+export async function setUserCompaniesAction(userId: string, _prev: FormState, formData: FormData): Promise<FormState> {
+  const me = await getActionUser(["MANAGER"]);
+  if (!me) return { ok: false, error: "unauthorized" };
+  const target = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, role: true } });
+  if (!target) return { ok: false, error: "notFound" };
+  if (target.role === "SYSTEM_ADMIN" && me.role !== "SYSTEM_ADMIN") return { ok: false, error: "unauthorized" };
+
+  const requested = formData.getAll("companyIds").map(String).filter(Boolean);
+  const valid = await prisma.company.findMany({ where: { id: { in: requested } }, select: { id: true } });
+  await prisma.$transaction([
+    prisma.userCompany.deleteMany({ where: { userId } }),
+    prisma.userCompany.createMany({ data: valid.map((c) => ({ userId, companyId: c.id })) }),
+  ]);
+  await audit(me.id, "user.setCompanies", "User", userId, { companies: valid.length });
   revalidatePath("/", "layout");
   return { ok: true, error: null, info: "saved" };
 }
