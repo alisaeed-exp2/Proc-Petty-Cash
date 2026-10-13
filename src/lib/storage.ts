@@ -40,6 +40,10 @@ async function getClient() {
         region: c.region,
         endpoint: c.endpoint,
         forcePathStyle: c.pathStyle,
+        // Newer SDK versions add CRC32 checksums by default, which Alibaba OSS and other
+        // S3-compatible services can reject. Only send them when the operation requires it.
+        requestChecksumCalculation: "WHEN_REQUIRED",
+        responseChecksumValidation: "WHEN_REQUIRED",
         credentials: { accessKeyId: c.accessKeyId, secretAccessKey: c.secretAccessKey },
       }),
     };
