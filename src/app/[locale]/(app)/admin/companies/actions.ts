@@ -5,6 +5,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getActionUser } from "@/lib/session";
 import { audit } from "@/lib/audit";
+import { deleteObject, putObject, storageConfigured } from "@/lib/storage";
 import type { FormState } from "@/components/action-form";
 
 const nameFields = {
@@ -159,6 +160,40 @@ export async function deleteSignatoryAction(id: string, _prev: FormState, _fd: F
   if (!me) return { ok: false, error: "unauthorized" };
   await prisma.companySignatory.delete({ where: { id } }).catch(() => null);
   await audit(me.id, "signatory.delete", "CompanySignatory", id);
+  refresh();
+  return { ok: true, error: null };
+}
+
+const LOGO_TYPES: Record<string, string> = { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp" };
+
+export async function uploadLogoAction(companyId: string, _prev: FormState, formData: FormData): Promise<FormState> {
+  const me = await getActionUser(["MANAGER"]);
+  if (!me) return { ok: false, error: "unauthorized" };
+  const file = formData.get("logo");
+  if (!(file instanceof File) || file.size === 0) return { ok: false, error: "logoInvalid" };
+  const ext = LOGO_TYPES[file.type];
+  if (!ext || file.size > 2 * 1024 * 1024) return { ok: false, error: "logoInvalid" };
+  if (!storageConfigured()) return { ok: false, error: "logoStorage" };
+  const company = await prisma.company.findUnique({ where: { id: companyId }, select: { logoKey: true } });
+  if (!company) return { ok: false, error: "notFound" };
+
+  const key = `logos/${companyId}-${Date.now()}.${ext}`;
+  await putObject(key, Buffer.from(await file.arrayBuffer()), file.type);
+  await prisma.company.update({ where: { id: companyId }, data: { logoKey: key, logoMime: file.type } });
+  if (company.logoKey) await deleteObject(company.logoKey).catch(() => null);
+  await audit(me.id, "company.logo.set", "Company", companyId);
+  refresh();
+  return { ok: true, error: null, info: "saved" };
+}
+
+export async function removeLogoAction(companyId: string, _prev: FormState, _fd: FormData): Promise<FormState> {
+  const me = await getActionUser(["MANAGER"]);
+  if (!me) return { ok: false, error: "unauthorized" };
+  const company = await prisma.company.findUnique({ where: { id: companyId }, select: { logoKey: true } });
+  if (!company) return { ok: false, error: "notFound" };
+  await prisma.company.update({ where: { id: companyId }, data: { logoKey: null, logoMime: null } });
+  if (company.logoKey) await deleteObject(company.logoKey).catch(() => null);
+  await audit(me.id, "company.logo.remove", "Company", companyId);
   refresh();
   return { ok: true, error: null };
 }

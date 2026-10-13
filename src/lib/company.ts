@@ -7,9 +7,9 @@ import { requireUser, getActionUser, type AppUser } from "@/lib/session";
 
 export const COMPANY_COOKIE = "akcc_company";
 
-export type ActiveCompany = { id: string; code: string; nameEn: string; nameAr: string };
+export type ActiveCompany = { id: string; code: string; nameEn: string; nameAr: string; logoKey: string | null };
 
-const select = { id: true, code: true, nameEn: true, nameAr: true } as const;
+const select = { id: true, code: true, nameEn: true, nameAr: true, logoKey: true } as const;
 
 /** System administrators and the Group VP work across all companies; everyone else needs an assignment. */
 export function seesAllCompanies(role: Role): boolean {

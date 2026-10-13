@@ -75,7 +75,11 @@ export default async function PrintReportPage({
 
       <header className="mb-5 flex items-start justify-between gap-4 border-b-2 border-ocean pb-4">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={locale === "ar" ? "/brand/logo-ar.svg" : "/brand/logo-en.svg"} alt="" className="h-14 w-auto" />
+        <img
+          src={company.logoKey ? `/api/company-logo/${company.id}?v=${encodeURIComponent(company.logoKey)}` : locale === "ar" ? "/brand/logo-ar.svg" : "/brand/logo-en.svg"}
+          alt=""
+          className="h-14 w-auto max-w-[220px] object-contain"
+        />
         <div className="text-end">
           <h1 className="font-display text-2xl font-semibold text-ocean">{r(`names.${key}`)}</h1>
           <p className="text-sm font-medium">{companyName(company, locale)}</p>

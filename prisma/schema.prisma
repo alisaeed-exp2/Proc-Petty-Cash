@@ -97,6 +97,8 @@ model Company {
   nameEn   String
   nameAr   String
   active   Boolean @default(true)
+  logoKey  String?
+  logoMime String?
 
   projects Project[]
   expenses Expense[]

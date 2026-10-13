@@ -56,7 +56,9 @@
         "unauthorized": "You are not allowed to do that.",
         "invalid": "Please fill in the code and both names (code: letters, digits, - or _).",
         "codeTaken": "This code is already in use.",
-        "notFound": "Not found."
+        "notFound": "Not found.",
+        "logoInvalid": "Choose a PNG, JPG or WebP image up to 2 MB.",
+        "logoStorage": "File storage is not configured."
       },
       "signatures": {
         "title": "Required signatures",
@@ -66,6 +68,13 @@
         "positionEn": "Position (English)",
         "positionAr": "Position (Arabic)",
         "add": "Add signature"
+      },
+      "logo": {
+        "title": "Company logo",
+        "none": "No logo uploaded. Reports use the default Al Khalejiah logo.",
+        "upload": "Upload logo",
+        "remove": "Remove logo",
+        "hint": "PNG, JPG or WebP, up to 2 MB. Printed at the top of this company's PDF reports."
       }
     },
     "projects": {

@@ -15,6 +15,8 @@ import {
   addSignatoryAction,
   updateSignatoryAction,
   deleteSignatoryAction,
+  uploadLogoAction,
+  removeLogoAction,
 } from "../actions";
 
 export default async function CompanyDetailPage({ params }: { params: Promise<{ locale: string; id: string }> }) {
@@ -63,6 +65,24 @@ export default async function CompanyDetailPage({ params }: { params: Promise<{ 
               <input id="e-ar" name="nameAr" required defaultValue={company.nameAr} dir="rtl" className={inputCls} />
             </div>
           </ActionForm>
+
+          <div className="mt-4 border-t border-line pt-4">
+            <h3 className="mb-2 text-sm font-semibold text-ocean">{t("companies.logo.title")}</h3>
+            {company.logoKey ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={`/api/company-logo/${company.id}?v=${encodeURIComponent(company.logoKey)}`} alt="" className="mb-3 h-16 w-auto max-w-full rounded border border-line bg-white p-1" />
+            ) : (
+              <p className="mb-3 text-xs text-muted">{t("companies.logo.none")}</p>
+            )}
+            <ActionForm action={uploadLogoAction.bind(null, company.id)} namespace="admin.companies" submit={t("companies.logo.upload")} buttonClassName={small}>
+              <input name="logo" type="file" required accept="image/png,image/jpeg,image/webp" className={inputCls} />
+              <p className="text-xs text-muted">{t("companies.logo.hint")}</p>
+            </ActionForm>
+            {company.logoKey && (
+              <ActionForm action={removeLogoAction.bind(null, company.id)} namespace="admin.companies" submit={t("companies.logo.remove")} className="mt-2 space-y-0" buttonClassName={small} />
+            )}
+          </div>
+
           <div className="mt-4 flex items-center gap-3 border-t border-line pt-4">
             <Badge tone={company.active ? "APPROVED" : "DRAFT"}>{company.active ? c("active") : c("inactive")}</Badge>
             <ActionForm
@@ -137,10 +157,10 @@ export default async function CompanyDetailPage({ params }: { params: Promise<{ 
         )}
       </Card>
 
-      <Card title={t("signatures.title")} className="mt-6">
-        <p className="mb-4 text-sm text-muted">{t("signatures.hint")}</p>
+      <Card title={t("companies.signatures.title")} className="mt-6">
+        <p className="mb-4 text-sm text-muted">{t("companies.signatures.hint")}</p>
         {company.signatories.length === 0 ? (
-          <Empty>{t("signatures.empty")}</Empty>
+          <Empty>{t("companies.signatures.empty")}</Empty>
         ) : (
           <ul className="divide-y divide-line">
             {company.signatories.map((sg) => (
@@ -153,15 +173,15 @@ export default async function CompanyDetailPage({ params }: { params: Promise<{ 
                   buttonClassName={small}
                 >
                   <div>
-                    <label className="text-xs text-muted" htmlFor={`so-${sg.id}`}>{t("signatures.order")}</label>
+                    <label className="text-xs text-muted" htmlFor={`so-${sg.id}`}>{t("companies.signatures.order")}</label>
                     <input id={`so-${sg.id}`} name="sort" type="number" min={0} max={999} defaultValue={sg.sort} dir="ltr" className={`${inputCls} text-start`} />
                   </div>
                   <div>
-                    <label className="text-xs text-muted" htmlFor={`se-${sg.id}`}>{t("signatures.positionEn")}</label>
+                    <label className="text-xs text-muted" htmlFor={`se-${sg.id}`}>{t("companies.signatures.positionEn")}</label>
                     <input id={`se-${sg.id}`} name="positionEn" required defaultValue={sg.positionEn} dir="ltr" className={`${inputCls} text-start`} />
                   </div>
                   <div>
-                    <label className="text-xs text-muted" htmlFor={`sa-${sg.id}`}>{t("signatures.positionAr")}</label>
+                    <label className="text-xs text-muted" htmlFor={`sa-${sg.id}`}>{t("companies.signatures.positionAr")}</label>
                     <input id={`sa-${sg.id}`} name="positionAr" required defaultValue={sg.positionAr} dir="rtl" className={inputCls} />
                   </div>
                 </ActionForm>
@@ -178,20 +198,20 @@ export default async function CompanyDetailPage({ params }: { params: Promise<{ 
         )}
 
         <div className="mt-5 border-t border-line pt-5">
-          <h3 className="mb-3 text-sm font-semibold text-ocean">{t("signatures.add")}</h3>
+          <h3 className="mb-3 text-sm font-semibold text-ocean">{t("companies.signatures.add")}</h3>
           <ActionForm
             action={addSignatoryAction.bind(null, company.id)}
             namespace="admin.companies"
-            submit={t("signatures.add")}
+            submit={t("companies.signatures.add")}
             className="grid gap-3 sm:grid-cols-2"
             resetOnSuccess
           >
             <div>
-              <label className={labelCls} htmlFor="sn-en">{t("signatures.positionEn")}</label>
+              <label className={labelCls} htmlFor="sn-en">{t("companies.signatures.positionEn")}</label>
               <input id="sn-en" name="positionEn" required dir="ltr" className={`${inputCls} text-start`} />
             </div>
             <div>
-              <label className={labelCls} htmlFor="sn-ar">{t("signatures.positionAr")}</label>
+              <label className={labelCls} htmlFor="sn-ar">{t("companies.signatures.positionAr")}</label>
               <input id="sn-ar" name="positionAr" required dir="rtl" className={inputCls} />
             </div>
           </ActionForm>
