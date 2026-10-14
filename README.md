@@ -170,8 +170,17 @@ sudo -u <APP_SYSTEM_USER> bash -c 'set -a; . ./.env; set +a; npx prisma generate
 sudo -u <APP_SYSTEM_USER> bash -c 'set -a; . ./.env; set +a; node scripts/bootstrap.cjs'
 ```
 
-The last command creates all database tables and the first administrator. Its output must contain
-`Created admin user:` followed by `<ADMIN_EMAIL>`. The build takes a few minutes.
+The second command is the **production build** (it takes a few minutes). The third command creates all database
+tables and the first administrator; its output must contain `Created admin user:` followed by `<ADMIN_EMAIL>`.
+
+Check that the build exists before going on. This must print a file name, not an error:
+
+```bash
+ls <APP_DIRECTORY>/.next/BUILD_ID
+```
+
+If it says "No such file", the build did not finish: run the second command again and read its last lines.
+`npm run dev` does **not** create this build, and the service in step 7 cannot start without it.
 
 ## Step 7 — Run the application as a systemd service
 
