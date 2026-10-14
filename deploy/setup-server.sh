@@ -68,6 +68,9 @@ else
   echo ".env exists, keeping it."
 fi
 
+# Folder for the "Local disk" file-storage option (System settings > File storage)
+install -d -o "$APP_USER" -g "$APP_USER" /var/lib/akcc/files
+
 echo "== 5/8 Build and migrate"
 cat > /usr/local/bin/akcc-deploy <<'DEP'
 #!/usr/bin/env bash
@@ -137,7 +140,11 @@ cat > /usr/local/bin/akcc-backup <<'BAK'
 set -euo pipefail
 f=/var/backups/akcc/akcc-$(date +%F).sql.gz
 sudo -u postgres pg_dump akcc | gzip > "$f"
-find /var/backups/akcc -name '*.sql.gz' -mtime +14 -delete
+# Also archive locally stored invoice files, if that storage option is used
+if [ -d /var/lib/akcc/files ] && [ -n "$(ls -A /var/lib/akcc/files 2>/dev/null)" ]; then
+  tar -czf "/var/backups/akcc/files-$(date +%F).tar.gz" -C /var/lib/akcc files
+fi
+find /var/backups/akcc \( -name '*.sql.gz' -o -name 'files-*.tar.gz' \) -mtime +14 -delete
 BAK
 chmod +x /usr/local/bin/akcc-backup
 echo '30 2 * * * root /usr/local/bin/akcc-backup' > /etc/cron.d/akcc-backup

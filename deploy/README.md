@@ -19,3 +19,6 @@ Minimum: 2 vCPU, 4 GB RAM, 40 GB disk, Ubuntu 22.04/24.04. App and PostgreSQL ru
 5. Update later with `sudo akcc-deploy`. Logs: `journalctl -u akcc -f`.
 6. Backups: nightly database dump to /var/backups/akcc (14 days). Also copy them off the server
    and enable ECS disk snapshots. Invoice files live in the S3/OSS bucket; back that up too.
+
+Local file storage: in System settings choose "Local disk" and set the folder to `/var/lib/akcc/files`
+(created by the setup script and included in the nightly backup). Or choose the S3-compatible bucket (OSS).

@@ -1,4 +1,8 @@
 import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { createReadStream } from "node:fs";
+import { mkdir, rm, stat, writeFile } from "node:fs/promises";
+import path from "node:path";
+import { Readable } from "node:stream";
 import { getSetting } from "@/lib/settings";
 
 type Cfg = {
@@ -25,7 +29,26 @@ async function config(): Promise<Cfg | null> {
   return { bucket, endpoint, region: region || "auto", accessKeyId, secretAccessKey, pathStyle: pathStyle === "true" };
 }
 
+/** "s3" (default) keeps files in a bucket; "local" keeps them in a folder on the server's disk. */
+async function mode(): Promise<"s3" | "local"> {
+  return (await getSetting("STORAGE_MODE")) === "local" ? "local" : "s3";
+}
+
+async function localRoot(): Promise<string> {
+  const configured = await getSetting("STORAGE_LOCAL_PATH");
+  return path.resolve(configured || path.join(process.cwd(), "storage"));
+}
+
+/** Resolves a storage key inside the local folder and refuses anything that escapes it. */
+async function localPath(key: string): Promise<string> {
+  const root = await localRoot();
+  const full = path.resolve(root, key);
+  if (full !== root && !full.startsWith(root + path.sep)) throw new Error("Invalid storage key");
+  return full;
+}
+
 export async function storageConfigured(): Promise<boolean> {
+  if ((await mode()) === "local") return true;
   return (await config()) !== null;
 }
 
@@ -52,11 +75,26 @@ async function getClient() {
 }
 
 export async function putObject(key: string, body: Buffer, contentType: string): Promise<void> {
+  if ((await mode()) === "local") {
+    const file = await localPath(key);
+    await mkdir(path.dirname(file), { recursive: true });
+    await writeFile(file, body);
+    return;
+  }
   const { s3, bucket } = await getClient();
   await s3.send(new PutObjectCommand({ Bucket: bucket, Key: key, Body: body, ContentType: contentType }));
 }
 
 export async function getObject(key: string) {
+  if ((await mode()) === "local") {
+    const file = await localPath(key);
+    const info = await stat(file);
+    return {
+      stream: Readable.toWeb(createReadStream(file)) as unknown as ReadableStream,
+      contentType: "application/octet-stream",
+      length: info.size as number | undefined,
+    };
+  }
   const { s3, bucket } = await getClient();
   const res = await s3.send(new GetObjectCommand({ Bucket: bucket, Key: key }));
   if (!res.Body) throw new Error("Empty object");
@@ -68,6 +106,10 @@ export async function getObject(key: string) {
 }
 
 export async function deleteObject(key: string): Promise<void> {
+  if ((await mode()) === "local") {
+    await rm(await localPath(key), { force: true });
+    return;
+  }
   const { s3, bucket } = await getClient();
   await s3.send(new DeleteObjectCommand({ Bucket: bucket, Key: key }));
 }

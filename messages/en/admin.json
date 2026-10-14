@@ -100,8 +100,8 @@
       },
       "groups": {
         "storage": {
-          "title": "File storage (S3 compatible)",
-          "hint": "Where invoice files and company logos are kept permanently. Works with Alibaba Cloud OSS, MinIO, AWS S3 or any S3-compatible service."
+          "title": "File storage",
+          "hint": "Where invoice files and company logos are kept permanently. Switching does not move files already saved, so existing invoices stay in the previous location. Local disk files are lost if the server's disk is not persistent (for example a hosting platform without a volume) and must be backed up."
         },
         "ocr": {
           "title": "Automatic invoice reading",
@@ -127,7 +127,9 @@
         "ANTHROPIC_MODEL": "Model (optional)",
         "RESEND_API_KEY": "Resend API key",
         "EMAIL_FROM": "Sender address",
-        "APP_URL": "Application URL"
+        "APP_URL": "Application URL",
+        "STORAGE_MODE": "Where to keep files",
+        "STORAGE_LOCAL_PATH": "Local folder path"
       },
       "help": {
         "S3_ENDPOINT": "For example https://oss-me-central-1.aliyuncs.com (use your region's endpoint).",
@@ -140,7 +142,9 @@
         "ANTHROPIC_MODEL": "Leave empty for the default.",
         "RESEND_API_KEY": "Stored encrypted.",
         "EMAIL_FROM": "For example noreply@yourdomain.com. The domain must be verified in Resend.",
-        "APP_URL": "For example https://petty.yourcompany.com, without a trailing slash."
+        "APP_URL": "For example https://petty.yourcompany.com, without a trailing slash.",
+        "STORAGE_MODE": "Choose one. The S3 fields below apply only to S3 bucket; the folder path applies only to Local disk.",
+        "STORAGE_LOCAL_PATH": "Used only for Local disk. Absolute path the app can write to, for example /var/lib/akcc/files. Empty uses the app's own storage folder."
       },
       "test": {
         "title": "Test file storage",
@@ -157,6 +161,12 @@
         "noAuthSecret": "The server has no AUTH_SECRET, so keys cannot be stored securely. Set AUTH_SECRET in the server environment first.",
         "storageMissing": "Storage is not fully configured: endpoint, bucket, access key and secret are all required.",
         "storageFailed": "The storage test failed. Check the endpoint, bucket and keys (path-style may help). Error type:"
+      },
+      "options": {
+        "STORAGE_MODE": {
+          "s3": "S3-compatible bucket (OSS, MinIO, AWS S3)",
+          "local": "Local disk on this server"
+        }
       }
     }
   }

@@ -6,7 +6,8 @@ export type SettingDef = {
   secret?: boolean;
   /** Also read this environment variable if the key itself is not set. */
   envAlias?: string;
-  type?: "text" | "url" | "bool" | "password";
+  type?: "text" | "url" | "bool" | "password" | "select";
+  options?: string[]; // for type "select"
 };
 
 export type SettingGroup = { id: "storage" | "ocr" | "email" | "general"; items: SettingDef[] };
@@ -16,6 +17,8 @@ export const SETTING_GROUPS: SettingGroup[] = [
   {
     id: "storage",
     items: [
+      { key: "STORAGE_MODE", type: "select", options: ["s3", "local"] },
+      { key: "STORAGE_LOCAL_PATH" },
       { key: "S3_ENDPOINT", type: "url" },
       { key: "S3_BUCKET" },
       { key: "S3_REGION" },

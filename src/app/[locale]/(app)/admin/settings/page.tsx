@@ -36,7 +36,13 @@ export default async function SettingsPage({ params }: { params: Promise<{ local
                         {t(`source.${v.source}`)}
                       </Badge>
                     </div>
-                    {v.type === "bool" ? (
+                    {v.type === "select" ? (
+                      <select id={id} name={d.key} defaultValue={v.value || d.options?.[0]} dir="ltr" className={inputCls}>
+                        {d.options?.map((o) => (
+                          <option key={o} value={o}>{t(`options.${d.key}.${o}`)}</option>
+                        ))}
+                      </select>
+                    ) : v.type === "bool" ? (
                       <select id={id} name={d.key} defaultValue={v.value} dir="ltr" className={inputCls}>
                         <option value="">{t("bool.default")}</option>
                         <option value="true">{t("bool.yes")}</option>
