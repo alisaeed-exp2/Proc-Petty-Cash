@@ -139,7 +139,7 @@
         "ANTHROPIC_API_KEY": "يبدأ بـ sk-ant-. يُخزَّن مشفّرًا.",
         "ANTHROPIC_MODEL": "اتركه فارغًا للافتراضي.",
         "RESEND_API_KEY": "يُخزَّن مشفّرًا.",
-        "EMAIL_FROM": "مثال: AKCC Petty Cash <noreply@yourdomain.com>. يجب توثيق النطاق في Resend.",
+        "EMAIL_FROM": "مثال: noreply@yourdomain.com. يجب توثيق النطاق في Resend.",
         "APP_URL": "مثال: https://petty.yourcompany.com بدون شرطة في النهاية."
       },
       "test": {

@@ -139,7 +139,7 @@
         "ANTHROPIC_API_KEY": "Starts with sk-ant-. Stored encrypted.",
         "ANTHROPIC_MODEL": "Leave empty for the default.",
         "RESEND_API_KEY": "Stored encrypted.",
-        "EMAIL_FROM": "For example AKCC Petty Cash <noreply@yourdomain.com>. The domain must be verified in Resend.",
+        "EMAIL_FROM": "For example noreply@yourdomain.com. The domain must be verified in Resend.",
         "APP_URL": "For example https://petty.yourcompany.com, without a trailing slash."
       },
       "test": {
