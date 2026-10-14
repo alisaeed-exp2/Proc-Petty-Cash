@@ -26,7 +26,7 @@ export default async function LoginPage({ params }: { params: Promise<{ locale: 
     <main className="grid min-h-dvh lg:grid-cols-2">
       {/* Brand panel (Ocean). It sits on the start side, so it flips to the right in Arabic.
           The guide keeps the English logo in the left corner and the Arabic logo in the right. */}
-      <section className="relative flex flex-col overflow-hidden bg-ocean px-8 py-10 text-white sm:px-14 lg:py-14">
+      <section className="relative flex flex-col overflow-hidden bg-ocean px-5 py-6 text-white sm:px-14 sm:py-10 lg:py-14">
         <BrandEmblem
           tone="white"
           size={560}
@@ -35,15 +35,15 @@ export default async function LoginPage({ params }: { params: Promise<{ locale: 
 
         <BrandLogo locale={locale} tone="white" alt={brand("company")} width={150} priority />
 
-        <div className="relative my-12 lg:my-auto">
+        <div className="relative mt-8 lg:my-auto lg:mt-0">
           <p className="text-xs font-medium uppercase tracking-[0.24em] text-gold">{brand("product")}</p>
           <div className="my-6 h-px w-16 bg-gold/70" />
-          <h1 className="max-w-xl font-display text-4xl font-semibold leading-tight sm:text-[2.75rem]">
+          <h1 className="max-w-xl font-display text-3xl font-semibold leading-tight sm:text-[2.75rem]">
             {t("headline")}
           </h1>
-          <p className="mt-5 max-w-lg text-lg leading-relaxed text-ocean-25">{t("subheadline")}</p>
+          <p className="mt-5 hidden max-w-lg text-lg leading-relaxed text-ocean-25 lg:block">{t("subheadline")}</p>
 
-          <ul className="mt-10 max-w-xl space-y-6">
+          <ul className="mt-10 hidden max-w-xl space-y-6 lg:block">
             {features.map((key) => (
               <li key={key} className="flex gap-4">
                 <span className="flex size-10 shrink-0 items-center justify-center rounded-control border border-white/15 bg-white/5 text-gold">
@@ -61,12 +61,12 @@ export default async function LoginPage({ params }: { params: Promise<{ locale: 
         </div>
       </section>
 
-      <section className="relative flex flex-col bg-offwhite-50 px-8 py-8 sm:px-14">
+      <section className="relative flex flex-col bg-offwhite-50 px-5 py-6 sm:px-14 sm:py-8">
         <div className="flex justify-end">
           <LanguageToggle />
         </div>
-        <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-10">
-          <h2 className="font-display text-4xl font-semibold text-ocean">{t("welcome")}</h2>
+        <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-6 sm:py-10">
+          <h2 className="font-display text-3xl font-semibold text-ocean sm:text-4xl">{t("welcome")}</h2>
           <p className="mt-2 text-muted">{t("welcomeBody")}</p>
           <LoginForm />
         </div>

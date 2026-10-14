@@ -66,6 +66,10 @@ export function BulkQueue({
         {flaggedSelected > 0 && <Badge tone="FLAG">{t("flaggedSelected", { count: flaggedSelected })}</Badge>}
       </div>
       {state.error && <div className="mb-3"><Notice tone="bad">{t(`errors.${state.error}`)}</Notice></div>}
+      <label className="mb-3 flex items-center gap-2 text-sm sm:hidden">
+        <input type="checkbox" checked={allOn} onChange={() => setSelected(allOn ? new Set() : new Set(selectable.map((r) => r.id)))} />
+        {t("selectAll")}
+      </label>
       <Table>
         <thead>
           <tr>

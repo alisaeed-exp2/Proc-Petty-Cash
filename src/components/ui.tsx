@@ -1,14 +1,15 @@
 // Small, dependency-free UI building blocks (server-safe: no hooks).
 import type { ReactNode } from "react";
+import { ResponsiveTable } from "@/components/responsive-table";
 
 export const btnPrimary =
-  "inline-flex items-center justify-center gap-2 rounded-control bg-ocean px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate disabled:cursor-not-allowed disabled:opacity-60";
+  "inline-flex items-center justify-center gap-2 rounded-control bg-ocean px-4 py-2.5 min-h-11 text-sm sm:min-h-0 font-semibold text-white transition hover:bg-slate disabled:cursor-not-allowed disabled:opacity-60";
 export const btnSecondary =
-  "inline-flex items-center justify-center gap-2 rounded-control border border-line bg-white px-4 py-2.5 text-sm font-semibold text-ocean transition hover:bg-offwhite disabled:cursor-not-allowed disabled:opacity-60";
+  "inline-flex items-center justify-center gap-2 rounded-control border border-line bg-white px-4 py-2.5 min-h-11 text-sm font-semibold text-ocean sm:min-h-0 transition hover:bg-offwhite disabled:cursor-not-allowed disabled:opacity-60";
 export const btnDanger =
-  "inline-flex items-center justify-center gap-2 rounded-control bg-status-rejected px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60";
+  "inline-flex items-center justify-center gap-2 rounded-control bg-status-rejected px-4 py-2.5 min-h-11 text-sm sm:min-h-0 font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60";
 export const inputCls =
-  "mt-1.5 block w-full rounded-control border border-line bg-white px-3.5 py-2.5 text-sm text-ink shadow-sm outline-none transition focus:border-ocean focus:ring-2 focus:ring-ocean/20 disabled:bg-gray";
+  "mt-1.5 block w-full rounded-control border border-line bg-white px-3.5 py-2.5 text-base text-ink shadow-sm sm:text-sm outline-none transition focus:border-ocean focus:ring-2 focus:ring-ocean/20 disabled:bg-gray";
 export const labelCls = "block text-sm font-medium text-ink";
 export const hintCls = "mt-1 text-xs text-muted";
 
@@ -22,9 +23,9 @@ export function PageHeader({
   actions?: ReactNode;
 }) {
   return (
-    <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
-      <div>
-        <h1 className="font-display text-3xl font-semibold text-ocean">{title}</h1>
+    <div className="mb-5 flex flex-wrap items-end justify-between gap-3 sm:mb-6">
+      <div className="min-w-0">
+        <h1 className="font-display text-2xl font-semibold text-ocean sm:text-3xl">{title}</h1>
         {subtitle && <p className="mt-1 text-sm text-muted">{subtitle}</p>}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
@@ -44,9 +45,9 @@ export function Card({
   actions?: ReactNode;
 }) {
   return (
-    <section className={`rounded-card border border-line bg-white p-5 shadow-sm ${className}`}>
+    <section className={`rounded-card border border-line bg-white p-4 shadow-sm sm:p-5 ${className}`}>
       {(title || actions) && (
-        <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           {title && <h2 className="font-display text-lg font-semibold text-ocean">{title}</h2>}
           {actions}
         </div>
@@ -83,7 +84,7 @@ export function Stat({
     <div className="rounded-card border border-line bg-white p-4 shadow-sm">
       <div className="text-xs font-medium uppercase tracking-wide text-muted">{label}</div>
       <div className={`mt-2 flex items-baseline gap-1.5 ${toneText[tone]}`}>
-        <span className="num font-display text-2xl font-semibold">{value}</span>
+        <span className="num font-display text-xl font-semibold sm:text-2xl">{value}</span>
         {unit && <span className="text-xs font-medium text-muted">{unit}</span>}
       </div>
       {hint && <div className="mt-1 text-xs text-muted">{hint}</div>}
@@ -121,11 +122,7 @@ export function Badge({ tone, children }: { tone: keyof typeof badgeTone | strin
 }
 
 export function Table({ children }: { children: ReactNode }) {
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[32rem] border-collapse text-sm">{children}</table>
-    </div>
-  );
+  return <ResponsiveTable>{children}</ResponsiveTable>;
 }
 
 export const th = "border-b border-line px-3 py-2 text-start text-xs font-semibold uppercase tracking-wide text-muted";

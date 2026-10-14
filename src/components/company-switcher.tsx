@@ -23,16 +23,16 @@ export function CompanySwitcher({
   const canSwitch = companies.length > 1;
 
   return (
-    <form ref={form} action={selectCompanyAction} className="flex items-center gap-2">
+    <form ref={form} action={selectCompanyAction} className="flex min-w-0 items-center gap-2">
       <input type="hidden" name="locale" value={locale} />
-      <span className="text-xs font-medium uppercase tracking-wide text-muted">{t("company")}</span>
+      <span className="hidden text-xs font-medium uppercase tracking-wide text-muted sm:inline">{t("company")}</span>
       {canSwitch ? (
         <select
           name="companyId"
           aria-label={t("switch")}
           value={currentId ?? ""}
           onChange={() => form.current?.requestSubmit()}
-          className="max-w-[16rem] rounded-control border border-line bg-white px-3 py-1.5 text-sm font-semibold text-ocean"
+          className="min-w-0 max-w-[12rem] rounded-control border border-line bg-white px-3 py-1.5 text-base font-semibold text-ocean sm:max-w-[16rem] sm:text-sm"
         >
           {currentId === null && (
             <option value="" disabled>
@@ -46,7 +46,7 @@ export function CompanySwitcher({
           ))}
         </select>
       ) : (
-        <span className="font-display text-base font-semibold text-ocean">{currentName ?? t("noneSelected")}</span>
+        <span className="truncate font-display text-base font-semibold text-ocean">{currentName ?? t("noneSelected")}</span>
       )}
     </form>
   );

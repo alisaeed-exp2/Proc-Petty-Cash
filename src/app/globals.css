@@ -78,3 +78,64 @@ html[dir="rtl"] * {
   unicode-bidi: isolate;
   font-variant-numeric: tabular-nums;
 }
+
+/* Phones: tables become stacked cards (labels come from data-label, set by ResponsiveTable). */
+@media (max-width: 639px) {
+  table.rtable {
+    min-width: 0;
+  }
+  .rtable thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+  .rtable,
+  .rtable tbody,
+  .rtable tr,
+  .rtable td {
+    display: block;
+  }
+  .rtable tr {
+    margin-bottom: 0.75rem;
+    padding: 0.35rem 0.85rem;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-control);
+    background: #fff;
+  }
+  .rtable td {
+    position: relative;
+    min-height: 2rem;
+    padding: 0.45rem 0;
+    padding-inline-start: 42%;
+    border: 0;
+    text-align: start;
+    overflow-wrap: anywhere;
+  }
+  .rtable td + td {
+    border-top: 1px solid color-mix(in srgb, var(--color-line) 60%, transparent);
+  }
+  .rtable td::before {
+    content: attr(data-label);
+    position: absolute;
+    inset-inline-start: 0;
+    top: 0.5rem;
+    width: 38%;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-muted);
+  }
+  .rtable td[data-label=""] {
+    padding-inline-start: 0;
+  }
+  .rtable td[data-label=""]::before {
+    display: none;
+  }
+}
+
+/* Never let a wide child create sideways page scroll on phones. */
+html,
+body {
+  overflow-x: clip;
+}
