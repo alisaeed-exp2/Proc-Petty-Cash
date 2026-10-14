@@ -73,7 +73,17 @@ async function main() {
         where: { email, passwordChangedAt: null, mustChangePassword: false },
         data: { mustChangePassword: true },
       });
-      console.log("Admin user already exists, leaving it unchanged: " + email + (forced.count ? " (password change required at next sign-in)" : ""));
+      // An initial admin that was never signed in with (still on the first password) and was created
+      // under the old default role becomes a System Administrator. Accounts in use are never touched.
+      const upgraded = await prisma.user.updateMany({
+        where: { email, passwordChangedAt: null, role: "MANAGER" },
+        data: { role: "SYSTEM_ADMIN" },
+      });
+      console.log(
+        "Admin user already exists, leaving it unchanged: " + email +
+          (forced.count ? " (password change required at next sign-in)" : "") +
+          (upgraded.count ? " (role set to SYSTEM_ADMIN)" : ""),
+      );
       return;
     }
     const passwordHash = await bcrypt.hash(password, 12);
