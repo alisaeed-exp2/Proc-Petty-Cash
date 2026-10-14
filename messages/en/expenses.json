@@ -1,12 +1,12 @@
 {
   "expenses": {
     "newTitle": "New expense",
-    "newSubtitle": "Choose the company, then upload the invoice. We read it for you and you confirm the details.",
+    "newSubtitle": "Attach the invoice and fill in the details. Press \"Read automatically\" to fill them from the invoice, or type them yourself.",
     "noCompanies": "No companies are set up yet. Ask the Procurement Manager to add companies first.",
     "chooseCompany": "Choose a company",
     "noProject": "None",
     "files": "Invoice files",
-    "filesHint": "PDF, JPG, PNG or WebP. Up to 5 files, 10 MB each. The first file is read automatically; originals are kept permanently.",
+    "filesHint": "PDF, JPG, PNG or WebP. Up to 5 files, 10 MB each. \"Read automatically\" reads the first file; originals are kept permanently.",
     "upload": "Upload and read invoice",
     "reading": "Uploading and reading the invoice, this can take up to a minute…",
     "listTitle": "My expenses",
@@ -82,6 +82,9 @@
     "stage": {
       "CONTROLLER": "Controller",
       "MANAGER": "Manager"
-    }
+    },
+    "readAuto": "Read automatically",
+    "readingShort": "Reading…",
+    "saving": "Saving…"
   }
 }

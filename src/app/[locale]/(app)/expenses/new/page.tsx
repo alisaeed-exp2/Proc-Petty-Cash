@@ -5,7 +5,7 @@ import { localName } from "@/lib/names";
 import { Card, Notice, PageHeader } from "@/components/ui";
 import { NewExpenseForm } from "@/components/expense-forms";
 import { storageConfigured } from "@/lib/storage";
-import { createExpenseAction } from "../actions";
+import { createExpenseAction, readInvoiceAction } from "../actions";
 
 export default async function NewExpensePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -20,10 +20,10 @@ export default async function NewExpensePage({ params }: { params: Promise<{ loc
   return (
     <>
       <PageHeader title={t("newTitle")} subtitle={t("newSubtitle")} />
-      <div className="max-w-2xl">
+      <div className="max-w-3xl">
         {!(await storageConfigured()) && <div className="mb-4"><Notice tone="warn">{t("errors.storage")}</Notice></div>}
         <Card>
-          <NewExpenseForm action={createExpenseAction} companyName={companyName(company, locale)} projects={projects} locale={locale} />
+          <NewExpenseForm action={createExpenseAction} readAction={readInvoiceAction} companyName={companyName(company, locale)} projects={projects} locale={locale} />
         </Card>
       </div>
     </>

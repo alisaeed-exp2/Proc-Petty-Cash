@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getActionContext } from "@/lib/company";
 import { audit } from "@/lib/audit";
@@ -10,10 +9,10 @@ import { redirect } from "@/i18n/navigation";
 import { parseSarToHalalas } from "@/lib/ledger/money";
 import { duplicateKey, isOverspend } from "@/lib/ledger/balances";
 import { getAgentBalance } from "@/lib/ledger/db";
-import { parseDateInput } from "@/lib/format";
-import { readUploads, storeExpenseFiles } from "@/lib/expense-files";
+import { parseDateInput, toDateInput } from "@/lib/format";
+import { readUploads, storeExpenseFiles, type StoredFile } from "@/lib/expense-files";
 import { extractInvoice } from "@/lib/ocr";
-import { parseZatcaQr } from "@/lib/zatca";
+import { parseZatcaQr, type ZatcaFields } from "@/lib/zatca";
 import { deleteObject, storageConfigured } from "@/lib/storage";
 import { notifySubmitted } from "@/lib/notify";
 import type { FormState } from "@/components/action-form";
@@ -30,6 +29,11 @@ async function checkCompanyProject(companyId: string, projectId: string | null) 
   return null;
 }
 
+/**
+ * The whole "new expense" form in one step: attachment plus fields. The agent may have used
+ * "read automatically" first (readInvoiceAction) or typed everything; either way the values
+ * that arrive here are what they confirmed.
+ */
 export async function createExpenseAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const ctx = await getActionContext(["AGENT"]);
   if (!ctx) return { ok: false, error: "unauthorized" };
@@ -37,49 +41,70 @@ export async function createExpenseAction(_prev: FormState, formData: FormData):
   if (!(await storageConfigured())) return { ok: false, error: "storage" };
 
   const locale = formData.get("locale") === "ar" ? "ar" : "en";
-  // Every record is created under the company the agent is currently working in.
-  const companyId = ctx.company.id;
-  const projectId = String(formData.get("projectId") ?? "") || null;
-  const notes = String(formData.get("notes") ?? "").trim().slice(0, 500) || null;
-  const cp = await checkCompanyProject(companyId, projectId);
-  if (cp) return { ok: false, error: cp };
-
   const read = await readUploads(formData.getAll("files"), { required: true });
   if ("error" in read) return { ok: false, error: read.error };
 
-  const expense = await prisma.expense.create({ data: { agentId: me.id, companyId, projectId, notes } });
-  const stored = await storeExpenseFiles(expense.id, read.files);
-  if ("error" in stored) {
-    await prisma.expense.delete({ where: { id: expense.id } });
-    return { ok: false, error: stored.error };
-  }
-
-  // Read the first file with OCR. A failure never blocks the agent: they can type the fields.
-  const ocr = await extractInvoice(read.files[0]);
+  // Every record is created under the company the agent is currently working in.
+  const expense = await prisma.expense.create({ data: { agentId: me.id, companyId: ctx.company.id } });
   const qr = parseZatcaQr(String(formData.get("qr") ?? ""));
-  const o = ocr.status === "done" ? ocr.fields : null;
-  if (o || qr) {
-    // The QR code is signed by the seller's system, so it wins over what the model read.
-    await prisma.expense.update({
-      where: { id: expense.id },
-      data: {
-        vendorName: qr?.vendorName ?? o?.vendorName ?? null,
-        vendorVatNo: qr?.vendorVatNo ?? o?.vendorVatNo ?? null,
-        invoiceNumber: o?.invoiceNumber ?? null,
-        invoiceDate: parseDateInput(qr?.invoiceDate ?? o?.invoiceDate ?? null),
-        subtotal: qr?.subtotal ?? o?.subtotal ?? null,
-        vatAmount: qr?.vatAmount ?? o?.vatAmount ?? null,
-        total: qr?.total ?? o?.total ?? null,
-        zatcaDecoded: !!qr,
-        ocrRaw: (ocr.status === "done" ? ocr.raw : { qr: true }) as Prisma.InputJsonObject,
-      },
-    });
-  } else if (ocr.status === "failed") {
-    console.error("OCR failed:", ocr.message);
+  const res = await persistExpense(expense, me, formData, read, qr);
+  if (!res.ok) {
+    // Nothing was stored yet (files are only saved after validation), so drop the empty shell.
+    await prisma.expense.delete({ where: { id: expense.id } }).catch(() => null);
+    return res;
   }
-  await audit(me.id, "expense.create", "Expense", expense.id, { ocr: ocr.status, qr: !!qr });
+  await audit(me.id, "expense.create", "Expense", expense.id, { qr: !!qr, submitted: res.info === "submitted" });
   revalidatePath("/", "layout");
-  return redirect({ href: `/expenses/${expense.id}?ocr=${o || qr ? "done" : ocr.status}`, locale });
+  if (res.info === "submitted") return redirect({ href: "/expenses?submitted=1", locale });
+  return redirect({ href: `/expenses/${expense.id}`, locale });
+}
+
+export type ReadInvoiceResult =
+  | {
+      ok: true;
+      zatca: boolean;
+      fields: {
+        vendorName: string;
+        vendorVatNo: string;
+        invoiceNumber: string;
+        invoiceDate: string;
+        subtotal: string;
+        vatAmount: string;
+        total: string;
+      };
+    }
+  | { ok: false; error: "unauthorized" | "noFiles" | "fileType" | "fileTooLarge" | "tooManyFiles" | "storage" | "ocrOff" | "ocrFailed" | "nothing" };
+
+const sar = (h: number | null | undefined) => (h === null || h === undefined ? "" : (h / 100).toFixed(2));
+
+/** Reads one attached invoice (automatic reading) and returns the values for the form. Saves nothing. */
+export async function readInvoiceAction(formData: FormData): Promise<ReadInvoiceResult> {
+  const ctx = await getActionContext(["AGENT"]);
+  if (!ctx) return { ok: false, error: "unauthorized" };
+  const read = await readUploads(formData.getAll("file").slice(0, 1), { required: true });
+  if ("error" in read) return { ok: false, error: read.error === "storage" ? "storage" : read.error };
+
+  const qr = parseZatcaQr(String(formData.get("qr") ?? ""));
+  const ocr = await extractInvoice(read.files[0]);
+  if (ocr.status === "skipped" && !qr) return { ok: false, error: "ocrOff" };
+  if (ocr.status === "failed") console.error("OCR failed:", ocr.message);
+  const o = ocr.status === "done" ? ocr.fields : null;
+  if (!o && !qr) return { ok: false, error: ocr.status === "failed" ? "ocrFailed" : "nothing" };
+
+  // The QR code is signed by the seller's system, so it wins over what the model read.
+  return {
+    ok: true,
+    zatca: !!qr,
+    fields: {
+      vendorName: qr?.vendorName ?? o?.vendorName ?? "",
+      vendorVatNo: qr?.vendorVatNo ?? o?.vendorVatNo ?? "",
+      invoiceNumber: o?.invoiceNumber ?? "",
+      invoiceDate: toDateInput(parseDateInput(qr?.invoiceDate ?? o?.invoiceDate ?? null)),
+      subtotal: sar(qr?.subtotal ?? o?.subtotal),
+      vatAmount: sar(qr?.vatAmount ?? o?.vatAmount),
+      total: sar(qr?.total ?? o?.total),
+    },
+  };
 }
 
 const fieldsSchema = z.object({
@@ -99,15 +124,16 @@ function opt(v: FormDataEntryValue | null): string | undefined {
   return s ? s : undefined;
 }
 
-export async function saveExpenseAction(expenseId: string, _prev: FormState, formData: FormData): Promise<FormState> {
-  const ctx = await getActionContext(["AGENT"]);
-  if (!ctx) return { ok: false, error: "unauthorized" };
-  const me = ctx.user;
+type Draft = { id: string; status: "DRAFT" | "SUBMITTED" | "CONTROLLER_APPROVED" | "APPROVED" | "REJECTED"; companyId: string };
 
-  const expense = await prisma.expense.findFirst({ where: { id: expenseId, agentId: me.id, companyId: ctx.company.id } });
-  if (!expense) return { ok: false, error: "notFound" };
-  if (expense.status !== "DRAFT" && expense.status !== "REJECTED") return { ok: false, error: "notEditable" };
-
+/** Validates the form, stores any new files and saves (or submits) the expense. Shared by create and edit. */
+async function persistExpense(
+  expense: Draft,
+  me: { id: string },
+  formData: FormData,
+  read: { files: StoredFile[] },
+  qr: ZatcaFields | null,
+): Promise<FormState> {
   const submit = formData.get("intent") === "submit";
   const parsed = fieldsSchema.safeParse({
     projectId: opt(formData.get("projectId")),
@@ -139,8 +165,6 @@ export async function saveExpenseAction(expenseId: string, _prev: FormState, for
   const vatNo = d.vendorVatNo ? d.vendorVatNo.replace(/\s/g, "") : null;
   if (vatNo && !/^\d{15}$/.test(vatNo)) return { ok: false, error: "badVat" };
 
-  const read = await readUploads(formData.getAll("files"), { required: false });
-  if ("error" in read) return { ok: false, error: read.error };
   if (read.files.length > 0 && !(await storageConfigured())) return { ok: false, error: "storage" };
 
   if (submit) {
@@ -163,6 +187,7 @@ export async function saveExpenseAction(expenseId: string, _prev: FormState, for
     vatAmount,
     total,
     notes: d.notes ?? null,
+    ...(qr && total !== null && qr.total === total ? { zatcaDecoded: true } : {}),
   };
 
   if (!submit) {
@@ -216,8 +241,27 @@ export async function saveExpenseAction(expenseId: string, _prev: FormState, for
   });
   revalidatePath("/", "layout");
   await notifySubmitted(expense.id).catch((e) => console.error("notify failed", e));
-  const locale = formData.get("locale") === "ar" ? "ar" : "en";
-  return redirect({ href: "/expenses?submitted=1", locale });
+  return { ok: true, error: null, info: "submitted" };
+}
+
+export async function saveExpenseAction(expenseId: string, _prev: FormState, formData: FormData): Promise<FormState> {
+  const ctx = await getActionContext(["AGENT"]);
+  if (!ctx) return { ok: false, error: "unauthorized" };
+  const me = ctx.user;
+
+  const expense = await prisma.expense.findFirst({ where: { id: expenseId, agentId: me.id, companyId: ctx.company.id } });
+  if (!expense) return { ok: false, error: "notFound" };
+  if (expense.status !== "DRAFT" && expense.status !== "REJECTED") return { ok: false, error: "notEditable" };
+
+  const read = await readUploads(formData.getAll("files"), { required: false });
+  if ("error" in read) return { ok: false, error: read.error };
+
+  const res = await persistExpense(expense, me, formData, read, null);
+  if (res.ok && res.info === "submitted") {
+    const locale = formData.get("locale") === "ar" ? "ar" : "en";
+    return redirect({ href: "/expenses?submitted=1", locale });
+  }
+  return res;
 }
 
 /** Agents may delete their own drafts that were never submitted. */
