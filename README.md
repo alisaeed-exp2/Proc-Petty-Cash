@@ -272,14 +272,12 @@ The certificate renews automatically. Test the renewal with `certbot renew --dry
 
 1. Open `https://<DOMAIN_NAME>/en/login` (Arabic: `/ar/login`).
 2. Sign in with `<ADMIN_EMAIL>` and `<ADMIN_PASSWORD>`. The app asks you to choose a new password.
-3. The first account is a **Procurement Manager**. To open the **System settings** page and to change other
-   users' roles you need the **System Administrator** role. Promote your account once:
+3. The first account is created as a **System Administrator**, so it can open **System settings** and change any
+   user's role. Create the Procurement Manager and the other users from the **Users** page.
 
-   ```bash
-   sudo -u postgres psql -d <DATABASE_NAME> -c "UPDATE \"User\" SET role='SYSTEM_ADMIN' WHERE email='<ADMIN_EMAIL>';"
-   ```
-
-   Then sign out and sign in again.
+   (If the account already existed before you ran step 6, its role is not changed. To promote it, run:
+   `sudo -u postgres psql -d <DATABASE_NAME> -c "UPDATE \"User\" SET role='SYSTEM_ADMIN' WHERE email='<ADMIN_EMAIL>';"`
+   then sign out and in again.)
 
 ## Step 11 — Configure the system (inside the app)
 

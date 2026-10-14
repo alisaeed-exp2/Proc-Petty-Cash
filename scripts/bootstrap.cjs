@@ -1,7 +1,7 @@
 // Runs before every release on Railway (see railway.json "preDeployCommand").
 //   1. Creates / updates the database tables from prisma/schema.prisma (prisma db push).
 //      It never drops data: a destructive schema change makes the deploy fail instead.
-//   2. Creates the first admin (Procurement Manager) from ADMIN_EMAIL / ADMIN_NAME /
+//   2. Creates the first admin (System Administrator) from ADMIN_EMAIL / ADMIN_NAME /
 //      ADMIN_INITIAL_PASSWORD, only if that email does not exist yet. An existing
 //      account is never touched, so changing your password later is safe.
 const { execSync } = require("node:child_process");
@@ -80,9 +80,9 @@ async function main() {
     await prisma.user.create({
       data: {
         email,
-        name: process.env.ADMIN_NAME || "Procurement Manager",
+        name: process.env.ADMIN_NAME || "System Administrator",
         passwordHash,
-        role: "MANAGER",
+        role: "SYSTEM_ADMIN",
         locale: "en",
         mustChangePassword: true,
       },
