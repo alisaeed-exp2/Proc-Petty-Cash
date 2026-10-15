@@ -7,7 +7,7 @@ export const REPORTS = ["consumption", "agents", "companies", "cash", "pending"]
 export type ReportKey = (typeof REPORTS)[number];
 
 export type Scope = { role: Role; userId: string; companyId: string };
-export type Filters = { from?: string; to?: string; agentId?: string };
+export type Filters = { from?: string; to?: string; agentId?: string; invoiceTypeId?: string };
 export type Labels = {
   yes: string;
   type: (k: string) => string;
@@ -41,12 +41,14 @@ export async function buildReport(
 ): Promise<ReportData> {
   const agentId = agentFilter(scope, f);
   const dates = range(f);
+  const typeId = f.invoiceTypeId || undefined;
 
   if (report === "consumption") {
     const rows = await prisma.expense.findMany({
       where: {
         status: "APPROVED",
         ...(agentId ? { agentId } : {}),
+        ...(typeId ? { invoiceTypeId: typeId } : {}),
         companyId: scope.companyId,
         ...(dates ? { invoiceDate: dates } : {}),
       },
@@ -55,6 +57,7 @@ export async function buildReport(
         agent: { select: { name: true } },
         company: true,
         project: true,
+        invoiceType: true,
         reviews: { where: { decision: "APPROVED" }, orderBy: { createdAt: "desc" }, take: 1, include: { reviewer: { select: { name: true } } } },
       },
     });
@@ -64,6 +67,7 @@ export async function buildReport(
         { key: "agent", width: 22, kind: "text" },
         { key: "company", width: 26, kind: "text" },
         { key: "project", width: 24, kind: "text" },
+        { key: "invoiceType", width: 22, kind: "text" },
         { key: "vendor", width: 30, kind: "text" },
         { key: "vatNo", width: 18, kind: "text" },
         { key: "invoiceNo", width: 16, kind: "text" },
@@ -81,6 +85,7 @@ export async function buildReport(
         agent: e.agent.name,
         company: localName(e.company, locale),
         project: e.project ? localName(e.project, locale) : null,
+        invoiceType: e.invoiceType ? localName(e.invoiceType, locale) : null,
         vendor: e.vendorName,
         vatNo: e.vendorVatNo,
         invoiceNo: e.invoiceNumber,
@@ -132,17 +137,19 @@ export async function buildReport(
       where: {
         status: "APPROVED",
         ...(agentId ? { agentId } : {}),
+        ...(typeId ? { invoiceTypeId: typeId } : {}),
         companyId: scope.companyId,
         ...(dates ? { invoiceDate: dates } : {}),
       },
-      include: { company: true, project: true },
+      include: { company: true, project: true, invoiceType: true },
     });
-    const groups = new Map<string, { company: string; project: string | null; count: number; subtotal: number; vat: number; total: number }>();
+    const groups = new Map<string, { company: string; project: string | null; invoiceType: string | null; count: number; subtotal: number; vat: number; total: number }>();
     for (const e of rows) {
-      const key = `${e.companyId}|${e.projectId ?? ""}`;
+      const key = `${e.companyId}|${e.projectId ?? ""}|${e.invoiceTypeId ?? ""}`;
       const g = groups.get(key) ?? {
         company: localName(e.company, locale),
         project: e.project ? localName(e.project, locale) : null,
+        invoiceType: e.invoiceType ? localName(e.invoiceType, locale) : null,
         count: 0,
         subtotal: 0,
         vat: 0,
@@ -158,6 +165,7 @@ export async function buildReport(
       cols: [
         { key: "company", width: 30, kind: "text" },
         { key: "project", width: 28, kind: "text" },
+        { key: "invoiceType", width: 24, kind: "text" },
         { key: "count", width: 12, kind: "int" },
         { key: "subtotal", width: 16, kind: "money" },
         { key: "vat", width: 14, kind: "money" },
@@ -165,7 +173,7 @@ export async function buildReport(
       ],
       sumKeys: ["count", "subtotal", "vat", "total"],
       rows: [...groups.values()]
-        .sort((a, b) => a.company.localeCompare(b.company) || (a.project ?? "").localeCompare(b.project ?? ""))
+        .sort((a, b) => a.company.localeCompare(b.company) || (a.project ?? "").localeCompare(b.project ?? "") || (a.invoiceType ?? "").localeCompare(b.invoiceType ?? ""))
         .map((g) => ({ ...g, subtotal: g.subtotal / 100, vat: g.vat / 100, total: g.total / 100 })),
     };
   }
@@ -205,6 +213,7 @@ export async function buildReport(
     where: {
       status: { in: ["SUBMITTED", "CONTROLLER_APPROVED", "REJECTED"] },
       ...(agentId ? { agentId } : {}),
+      ...(typeId ? { invoiceTypeId: typeId } : {}),
       companyId: scope.companyId,
     },
     orderBy: [{ status: "asc" }, { submittedAt: "asc" }],
@@ -212,6 +221,7 @@ export async function buildReport(
       agent: { select: { name: true } },
       company: true,
       project: true,
+      invoiceType: true,
       reviews: { where: { decision: "REJECTED" }, orderBy: { createdAt: "desc" }, take: 1 },
     },
   });
@@ -222,6 +232,7 @@ export async function buildReport(
       { key: "agent", width: 22, kind: "text" },
       { key: "company", width: 26, kind: "text" },
       { key: "project", width: 24, kind: "text" },
+      { key: "invoiceType", width: 22, kind: "text" },
       { key: "vendor", width: 30, kind: "text" },
       { key: "invoiceNo", width: 16, kind: "text" },
       { key: "total", width: 14, kind: "money" },
@@ -236,6 +247,7 @@ export async function buildReport(
       agent: e.agent.name,
       company: localName(e.company, locale),
       project: e.project ? localName(e.project, locale) : null,
+      invoiceType: e.invoiceType ? localName(e.invoiceType, locale) : null,
       vendor: e.vendorName,
       invoiceNo: e.invoiceNumber,
       total: sar(e.total),

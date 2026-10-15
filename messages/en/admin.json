@@ -168,6 +168,27 @@
           "local": "Local disk on this server"
         }
       }
+    },
+    "invoiceTypes": {
+      "title": "Invoice types",
+      "subtitle": "The list of invoice types agents choose from when entering an expense. Used as a filter in reports. Shared by all companies.",
+      "empty": "No invoice types yet. Add the first one so agents can submit expenses.",
+      "new": "New invoice type",
+      "code": "Code",
+      "nameEn": "Name (English)",
+      "nameAr": "Name (Arabic)",
+      "used": "Expenses",
+      "note": "Deactivated types stay on existing invoices and in reports but cannot be chosen for new ones.",
+      "info": {
+        "created": "Created.",
+        "saved": "Saved."
+      },
+      "errors": {
+        "unauthorized": "You are not allowed to do that.",
+        "invalid": "Please fill in the code and both names (code: letters, digits, - or _).",
+        "codeTaken": "This code is already in use.",
+        "notFound": "Not found."
+      }
     }
   }
 }

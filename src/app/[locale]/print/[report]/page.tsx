@@ -5,6 +5,7 @@ import { REPORTS, buildReport, type Cell, type Col, type Filters, type ReportKey
 import { formatHalalas } from "@/lib/ledger/money";
 import { formatDate } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
+import { localName } from "@/lib/names";
 import { PrintButton } from "@/components/print-button";
 import { Link } from "@/i18n/navigation";
 
@@ -41,7 +42,7 @@ export default async function PrintReportPage({
   const data = await buildReport(
     key,
     { role: user.role, userId: user.id, companyId: company.id },
-    { from: filters.from, to: filters.to, agentId: filters.agentId },
+    { from: filters.from, to: filters.to, agentId: filters.agentId, invoiceTypeId: filters.invoiceTypeId },
     locale,
     { yes: r("yes"), type: (k) => r(`types.${k}`), status: (k) => x(`status.${k}`) },
   );
@@ -51,6 +52,7 @@ export default async function PrintReportPage({
     orderBy: [{ sort: "asc" }, { id: "asc" }],
   });
 
+  const typeRow = filters.invoiceTypeId ? await prisma.invoiceType.findUnique({ where: { id: filters.invoiceTypeId } }) : null;
   const period = filters.from || filters.to ? `${filters.from ?? "…"} → ${filters.to ?? "…"}` : r("allDates");
   const totals = data.sumKeys.length > 0 && data.rows.length > 0;
   const sum = (k: string) => data.rows.reduce((n, row) => n + (typeof row[k] === "number" ? (row[k] as number) : 0), 0);
@@ -84,7 +86,8 @@ export default async function PrintReportPage({
           <h1 className="font-display text-2xl font-semibold text-ocean">{r(`names.${key}`)}</h1>
           <p className="text-sm font-medium">{companyName(company, locale)}</p>
           <p className="mt-1 text-xs text-muted">
-            {r("generated")}: {formatDate(new Date(), locale)} · {r("period")}: <span className="num">{period}</span> · {r("currencyNote")}
+            {r("generated")}: {formatDate(new Date(), locale)} · {r("period")}: <span className="num">{period}</span>
+            {typeRow ? <> · {r("invoiceType")}: {localName(typeRow, locale)}</> : null} · {r("currencyNote")}
           </p>
           <p className="text-xs text-muted">{user.name} · {r("rowsCount", { count: data.rows.length })}</p>
         </div>

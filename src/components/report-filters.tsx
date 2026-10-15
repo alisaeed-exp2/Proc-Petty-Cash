@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { btnPrimary, btnSecondary, inputCls, labelCls } from "@/components/ui";
 import { Link } from "@/i18n/navigation";
 import type { Filters } from "@/lib/reports";
+import { localName } from "@/lib/names";
 
 /** GET filter form shared by the consumption history and the reports page. */
 export async function ReportFilters({
@@ -10,11 +11,13 @@ export async function ReportFilters({
   filters,
   showAgent,
   companyId,
+  locale,
 }: {
   action: "/consumption" | "/reports";
   filters: Filters;
   showAgent: boolean;
   companyId: string;
+  locale: string;
 }) {
   const r = await getTranslations("reports");
   const c = await getTranslations("common");
@@ -25,8 +28,9 @@ export async function ReportFilters({
         orderBy: { name: "asc" },
       })
     : [];
+  const types = await prisma.invoiceType.findMany({ orderBy: [{ active: "desc" }, { code: "asc" }] });
   return (
-    <form method="get" className="mb-6 grid gap-3 rounded-card border border-line bg-white p-4 shadow-sm sm:grid-cols-2 xl:grid-cols-[repeat(3,1fr)_auto]">
+    <form method="get" className="mb-6 grid gap-3 rounded-card border border-line bg-white p-4 shadow-sm sm:grid-cols-2 xl:grid-cols-[repeat(4,1fr)_auto]">
       <div>
         <label className={labelCls} htmlFor="f-from">{c("from")}</label>
         <input id="f-from" name="from" type="date" defaultValue={filters.from ?? ""} className={inputCls} />
@@ -48,6 +52,15 @@ export async function ReportFilters({
       ) : (
         <div className="hidden xl:block" />
       )}
+      <div>
+        <label className={labelCls} htmlFor="f-type">{r("invoiceType")}</label>
+        <select id="f-type" name="invoiceTypeId" defaultValue={filters.invoiceTypeId ?? ""} className={inputCls}>
+          <option value="">{c("all")}</option>
+          {types.map((x) => (
+            <option key={x.id} value={x.id}>{localName(x, locale)}</option>
+          ))}
+        </select>
+      </div>
       <div className="flex items-end gap-2">
         <button type="submit" className={btnPrimary}>{c("filter")}</button>
         <Link href={action} className={btnSecondary}>{r("clear")}</Link>
@@ -61,6 +74,7 @@ export function exportHref(report: string, locale: string, f: Filters): string {
   if (f.from) p.set("from", f.from);
   if (f.to) p.set("to", f.to);
   if (f.agentId) p.set("agentId", f.agentId);
+  if (f.invoiceTypeId) p.set("invoiceTypeId", f.invoiceTypeId);
   return `/api/export/${report}?${p.toString()}`;
 }
 
@@ -69,6 +83,7 @@ export function pdfHref(report: string, locale: string, f: Filters): string {
   if (f.from) p.set("from", f.from);
   if (f.to) p.set("to", f.to);
   if (f.agentId) p.set("agentId", f.agentId);
+  if (f.invoiceTypeId) p.set("invoiceTypeId", f.invoiceTypeId);
   const qs = p.toString();
   return `/${locale}/print/${report}${qs ? `?${qs}` : ""}`;
 }

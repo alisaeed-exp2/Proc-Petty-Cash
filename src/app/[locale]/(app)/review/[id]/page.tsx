@@ -35,6 +35,7 @@ export default async function ReviewDetailPage({ params }: { params: Promise<{ l
       agent: { select: { name: true } },
       company: true,
       project: true,
+      invoiceType: true,
       files: { orderBy: { uploadedAt: "asc" } },
       reviews: { orderBy: { createdAt: "desc" }, include: { reviewer: { select: { name: true } } } },
     },
@@ -73,6 +74,7 @@ export default async function ReviewDetailPage({ params }: { params: Promise<{ l
 
           <Card title={x("details")}>
             <dl>
+              <Row label={x("invoiceType")}>{e.invoiceType ? localName(e.invoiceType, locale) : "-"}</Row>
               <Row label={x("vendor")}>{e.vendorName ?? "-"}</Row>
               <Row label={x("vatNo")}><span className="num">{e.vendorVatNo ?? "-"}</span></Row>
               <Row label={x("invoiceNo")}><span className="num">{e.invoiceNumber ?? "-"}</span></Row>

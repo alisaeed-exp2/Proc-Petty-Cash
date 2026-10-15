@@ -20,7 +20,7 @@ export default async function ReportsPage({
   return (
     <>
       <PageHeader title={r("title")} subtitle={user.role === "AGENT" ? r("subtitleAgent") : r("subtitle")} />
-      <ReportFilters action="/reports" filters={filters} showAgent={user.role !== "AGENT"} companyId={company.id} />
+      <ReportFilters action="/reports" filters={filters} showAgent={user.role !== "AGENT"} companyId={company.id} locale={locale} />
       <div className="grid gap-4 md:grid-cols-2">
         {REPORTS.map((key) => (
           <Card key={key} title={r(`names.${key}`)}>

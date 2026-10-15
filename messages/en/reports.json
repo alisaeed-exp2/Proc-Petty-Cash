@@ -3,7 +3,7 @@
     "title": "Reports",
     "subtitle": "Download Excel reports. Filters apply where relevant.",
     "subtitleAgent": "Download Excel reports of your own activity.",
-    "filterNote": "Date filters apply to invoice date (consumption, companies) and transaction date (cash movements). The agent summary and pending report always show the current position.",
+    "filterNote": "Date filters apply to invoice date (consumption, companies) and transaction date (cash movements). The agent summary and pending report always show the current position. The invoice type filter applies to the consumption, companies and pending reports.",
     "download": "Download Excel",
     "clear": "Clear",
     "yes": "Yes",
@@ -70,13 +70,15 @@
       "note": "Note",
       "status": "Status",
       "submittedAt": "Submitted on",
-      "reason": "Rejection reason"
+      "reason": "Rejection reason",
+      "invoiceType": "Invoice type"
     },
     "downloadExcel": "Excel",
     "downloadPdf": "PDF",
     "pdfHint": "Opens a print-ready report. Choose “Save as PDF” in the print window.",
     "print": "Print / Save as PDF",
     "back": "Back to reports",
-    "rowsCount": "{count} rows"
+    "rowsCount": "{count} rows",
+    "invoiceType": "Invoice type"
   }
 }

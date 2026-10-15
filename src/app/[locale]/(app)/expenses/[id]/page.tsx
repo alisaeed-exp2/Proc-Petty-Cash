@@ -42,6 +42,7 @@ export default async function ExpensePage({
     include: {
       company: true,
       project: true,
+      invoiceType: true,
       files: { orderBy: { uploadedAt: "asc" } },
       reviews: { orderBy: { createdAt: "desc" }, include: { reviewer: { select: { name: true } } } },
     },
@@ -58,6 +59,15 @@ export default async function ExpensePage({
       orderBy: { code: "asc" },
     });
     projects = list.map((p) => ({ id: p.id, name: localName(p, locale) }));
+  }
+
+  let types: { id: string; name: string }[] = [];
+  if (editable) {
+    const list = await prisma.invoiceType.findMany({
+      where: { OR: [{ active: true }, { id: e.invoiceTypeId ?? "" }] },
+      orderBy: { code: "asc" },
+    });
+    types = list.map((x) => ({ id: x.id, name: localName(x, locale) }));
   }
 
   return (
@@ -93,11 +103,13 @@ export default async function ExpensePage({
                 action={saveExpenseAction.bind(null, e.id)}
                 companyName={localName(e.company, locale)}
                 projects={projects}
+                types={types}
                 locale={locale}
                 rejected={e.status === "REJECTED"}
                 values={{
                   companyId: e.companyId,
                   projectId: e.projectId,
+                  invoiceTypeId: e.invoiceTypeId,
                   vendorName: e.vendorName ?? "",
                   vendorVatNo: e.vendorVatNo ?? "",
                   invoiceNumber: e.invoiceNumber ?? "",
@@ -110,6 +122,7 @@ export default async function ExpensePage({
               />
             ) : (
               <dl>
+                <Row label={t("invoiceType")}>{e.invoiceType ? localName(e.invoiceType, locale) : "-"}</Row>
                 <Row label={t("vendor")}>{e.vendorName ?? "-"}</Row>
                 <Row label={t("vatNo")}><span className="num">{e.vendorVatNo ?? "-"}</span></Row>
                 <Row label={t("invoiceNo")}><span className="num">{e.invoiceNumber ?? "-"}</span></Row>

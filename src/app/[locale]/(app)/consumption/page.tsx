@@ -26,7 +26,7 @@ export default async function ConsumptionPage({
   const data = await buildReport(
     "consumption",
     { role: user.role, userId: user.id, companyId: company.id },
-    { from: filters.from, to: filters.to, agentId: filters.agentId },
+    { from: filters.from, to: filters.to, agentId: filters.agentId, invoiceTypeId: filters.invoiceTypeId },
     locale,
     { yes: r("yes"), type: (k) => r(`types.${k}`), status: (k) => x(`status.${k}`) },
   );
@@ -44,7 +44,7 @@ export default async function ConsumptionPage({
           </>
         }
       />
-      <ReportFilters action="/consumption" filters={filters} showAgent companyId={company.id} />
+      <ReportFilters action="/consumption" filters={filters} showAgent companyId={company.id} locale={locale} />
 
       <div className="mb-6 grid gap-4 sm:grid-cols-2">
         <Stat label={r("count")} value={String(data.rows.length)} />
@@ -76,6 +76,7 @@ export default async function ConsumptionPage({
                   <td className={td}>
                     {row.company as string}
                     {row.project ? <div className="text-xs text-muted">{row.project as string}</div> : null}
+                    {row.invoiceType ? <div className="text-xs text-muted">{row.invoiceType as string}</div> : null}
                   </td>
                   <td className={td}>{(row.vendor as string | null) ?? "-"}</td>
                   <td className={`${td} num`}>{(row.invoiceNo as string | null) ?? "-"}</td>

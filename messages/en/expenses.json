@@ -75,7 +75,9 @@
       "badDate": "Enter a valid date.",
       "badVat": "The VAT number must be exactly 15 digits.",
       "inconsistent": "Subtotal plus VAT does not equal the total. Please check the amounts.",
-      "notDeletable": "Only drafts that were never submitted can be deleted."
+      "notDeletable": "Only drafts that were never submitted can be deleted.",
+      "badType": "Choose a valid invoice type.",
+      "typeRequired": "Choose the invoice type to submit."
     },
     "deleteDraft": "Delete draft",
     "deleteConfirm": "Delete this draft and its uploaded files? This cannot be undone.",
@@ -85,6 +87,9 @@
     },
     "readAuto": "Read automatically",
     "readingShort": "Reading…",
-    "saving": "Saving…"
+    "saving": "Saving…",
+    "invoiceType": "Invoice type",
+    "chooseType": "Choose an invoice type",
+    "noTypes": "No invoice types are set up yet. Ask the Procurement Manager to add them."
   }
 }

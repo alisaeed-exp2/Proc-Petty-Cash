@@ -5,6 +5,8 @@ import { companyName, getActiveCompany } from "@/lib/company";
 import { REPORTS, buildReport, type Cell, type ReportKey } from "@/lib/reports";
 import { formatDate } from "@/lib/format";
 import { canSeeRecords } from "@/lib/access";
+import { prisma } from "@/lib/prisma";
+import { localName } from "@/lib/names";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -31,6 +33,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ report: 
     from: url.searchParams.get("from") || undefined,
     to: url.searchParams.get("to") || undefined,
     agentId: url.searchParams.get("agentId") || undefined,
+    invoiceTypeId: url.searchParams.get("invoiceTypeId") || undefined,
   };
 
   const r = await getTranslations({ locale, namespace: "reports" });
@@ -54,7 +57,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ report: 
   ws.getCell(1, 1).font = { bold: true, size: 14, color: { argb: OCEAN } };
   ws.mergeCells(2, 1, 2, Math.max(ncols, 2));
   const period = filters.from || filters.to ? `${filters.from ?? "…"} → ${filters.to ?? "…"}` : r("allDates");
-  ws.getCell(2, 1).value = `${r("generated")}: ${formatDate(new Date(), locale)} · ${r("period")}: ${period} · ${r("currencyNote")}`;
+  const typeRow = filters.invoiceTypeId ? await prisma.invoiceType.findUnique({ where: { id: filters.invoiceTypeId } }) : null;
+  const typeNote = typeRow ? ` · ${r("invoiceType")}: ${localName(typeRow, locale)}` : "";
+  ws.getCell(2, 1).value = `${r("generated")}: ${formatDate(new Date(), locale)} · ${r("period")}: ${period}${typeNote} · ${r("currencyNote")}`;
   ws.getCell(2, 1).font = { size: 10, color: { argb: "FF6B6B6B" } };
 
   const header = ws.getRow(4);

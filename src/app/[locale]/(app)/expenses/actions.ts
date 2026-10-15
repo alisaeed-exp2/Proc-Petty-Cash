@@ -29,6 +29,16 @@ async function checkCompanyProject(companyId: string, projectId: string | null) 
   return null;
 }
 
+/** The type must exist and be active; an expense that already carries an inactive type may keep it. */
+async function checkInvoiceType(invoiceTypeId: string | null, keep?: string | null) {
+  if (!invoiceTypeId) return null;
+  const type = await prisma.invoiceType.findFirst({
+    where: { id: invoiceTypeId, ...(invoiceTypeId === keep ? {} : { active: true }) },
+    select: { id: true },
+  });
+  return type ? null : "badType";
+}
+
 /**
  * The whole "new expense" form in one step: attachment plus fields. The agent may have used
  * "read automatically" first (readInvoiceAction) or typed everything; either way the values
@@ -109,6 +119,7 @@ export async function readInvoiceAction(formData: FormData): Promise<ReadInvoice
 
 const fieldsSchema = z.object({
   projectId: z.string().optional(),
+  invoiceTypeId: z.string().optional(),
   vendorName: z.string().trim().max(200).optional(),
   vendorVatNo: z.string().trim().max(30).optional(),
   invoiceNumber: z.string().trim().max(80).optional(),
@@ -124,7 +135,7 @@ function opt(v: FormDataEntryValue | null): string | undefined {
   return s ? s : undefined;
 }
 
-type Draft = { id: string; status: "DRAFT" | "SUBMITTED" | "CONTROLLER_APPROVED" | "APPROVED" | "REJECTED"; companyId: string };
+type Draft = { id: string; invoiceTypeId?: string | null; status: "DRAFT" | "SUBMITTED" | "CONTROLLER_APPROVED" | "APPROVED" | "REJECTED"; companyId: string };
 
 /** Validates the form, stores any new files and saves (or submits) the expense. Shared by create and edit. */
 async function persistExpense(
@@ -137,6 +148,7 @@ async function persistExpense(
   const submit = formData.get("intent") === "submit";
   const parsed = fieldsSchema.safeParse({
     projectId: opt(formData.get("projectId")),
+    invoiceTypeId: opt(formData.get("invoiceTypeId")),
     vendorName: opt(formData.get("vendorName")),
     vendorVatNo: opt(formData.get("vendorVatNo")),
     invoiceNumber: opt(formData.get("invoiceNumber")),
@@ -151,6 +163,8 @@ async function persistExpense(
 
   const cp = await checkCompanyProject(expense.companyId, d.projectId ?? null);
   if (cp) return { ok: false, error: cp };
+  const typeErr = await checkInvoiceType(d.invoiceTypeId ?? null, expense.invoiceTypeId);
+  if (typeErr) return { ok: false, error: typeErr };
 
   let subtotal: number | null = null;
   let vatAmount: number | null = null;
@@ -168,6 +182,7 @@ async function persistExpense(
   if (read.files.length > 0 && !(await storageConfigured())) return { ok: false, error: "storage" };
 
   if (submit) {
+    if (!d.invoiceTypeId) return { ok: false, error: "typeRequired" };
     if (!d.vendorName || !invoiceDate || total === null || total <= 0) return { ok: false, error: "requiredFields" };
     if (subtotal !== null && vatAmount !== null && Math.abs(subtotal + vatAmount - total) > TOLERANCE) {
       return { ok: false, error: "inconsistent" };
@@ -179,6 +194,7 @@ async function persistExpense(
 
   const base = {
     projectId: d.projectId ?? null,
+    invoiceTypeId: d.invoiceTypeId ?? null,
     vendorName: d.vendorName ?? null,
     vendorVatNo: vatNo,
     invoiceNumber: d.invoiceNumber ?? null,

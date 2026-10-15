@@ -17,13 +17,15 @@ export default async function NewExpensePage({ params }: { params: Promise<{ loc
     await prisma.project.findMany({ where: { companyId: company.id, active: true }, orderBy: { code: "asc" } })
   ).map((p) => ({ id: p.id, name: localName(p, locale) }));
 
+  const types = (await prisma.invoiceType.findMany({ where: { active: true }, orderBy: { code: "asc" } })).map((x) => ({ id: x.id, name: localName(x, locale) }));
+
   return (
     <>
       <PageHeader title={t("newTitle")} subtitle={t("newSubtitle")} />
       <div className="max-w-3xl">
         {!(await storageConfigured()) && <div className="mb-4"><Notice tone="warn">{t("errors.storage")}</Notice></div>}
         <Card>
-          <NewExpenseForm action={createExpenseAction} readAction={readInvoiceAction} companyName={companyName(company, locale)} projects={projects} locale={locale} />
+          <NewExpenseForm action={createExpenseAction} readAction={readInvoiceAction} companyName={companyName(company, locale)} projects={projects} types={types} locale={locale} />
         </Card>
       </div>
     </>

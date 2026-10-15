@@ -12,7 +12,8 @@
     "users": "Users",
     "companies": "Companies & projects",
     "account": "Change password",
-    "settings": "System settings"
+    "settings": "System settings",
+    "invoiceTypes": "Invoice types"
   },
   "roles": {
     "MANAGER": "Procurement Manager",

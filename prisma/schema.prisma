@@ -125,6 +125,17 @@ model Project {
   @@unique([companyId, code])
 }
 
+// Admin-managed lookup: the kind of invoice (e.g. food supplies, maintenance). Shared by all companies.
+model InvoiceType {
+  id     String  @id @default(cuid())
+  code   String  @unique
+  nameEn String
+  nameAr String
+  active Boolean @default(true)
+
+  expenses Expense[]
+}
+
 // Money received from Finance by the procurement manager.
 model Funding {
   id         String   @id @default(cuid())
@@ -181,6 +192,8 @@ model Expense {
   company   Company       @relation(fields: [companyId], references: [id])
   projectId String?
   project   Project?      @relation(fields: [projectId], references: [id])
+  invoiceTypeId String?
+  invoiceType   InvoiceType?  @relation(fields: [invoiceTypeId], references: [id])
   status    ExpenseStatus @default(DRAFT)
 
   notes         String?
@@ -206,6 +219,7 @@ model Expense {
   ledger  LedgerEntry[]
 
   @@index([agentId, status])
+  @@index([invoiceTypeId])
   @@index([status, submittedAt])
   @@index([vendorVatNo, invoiceNumber, total])
 }

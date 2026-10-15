@@ -7,6 +7,29 @@ import { emptyState, type FormState } from "@/components/action-form";
 import type { ReadInvoiceResult } from "@/app/[locale]/(app)/expenses/actions";
 
 export type ProjectOption = { id: string; name: string };
+export type TypeOption = { id: string; name: string };
+
+function TypeSelect({ types, value, onChange, defaultValue }: { types: TypeOption[]; value?: string; onChange?: (v: string) => void; defaultValue?: string | null }) {
+  const t = useTranslations("expenses");
+  const controlled = value !== undefined;
+  return (
+    <div>
+      <label className={labelCls} htmlFor="invoiceTypeId">{t("invoiceType")} *</label>
+      <select
+        id="invoiceTypeId"
+        name="invoiceTypeId"
+        {...(controlled ? { value, onChange: (e: React.ChangeEvent<HTMLSelectElement>) => onChange?.(e.target.value) } : { defaultValue: defaultValue ?? "" })}
+        className={inputCls}
+      >
+        <option value="">{t("chooseType")}</option>
+        {types.map((x) => (
+          <option key={x.id} value={x.id}>{x.name}</option>
+        ))}
+      </select>
+      {types.length === 0 && <p className={hintCls}>{t("noTypes")}</p>}
+    </div>
+  );
+}
 
 function ProjectSelect({ projects, projectId }: { projects: ProjectOption[]; projectId?: string | null }) {
   const t = useTranslations("expenses");
@@ -49,12 +72,14 @@ export function NewExpenseForm({
   readAction,
   companyName,
   projects,
+  types,
   locale,
 }: {
   action: (prev: FormState, fd: FormData) => Promise<FormState>;
   readAction: (fd: FormData) => Promise<ReadInvoiceResult>;
   companyName: string;
   projects: ProjectOption[];
+  types: TypeOption[];
   locale: string;
 }) {
   const t = useTranslations("expenses");
@@ -66,6 +91,7 @@ export function NewExpenseForm({
   const [qr, setQr] = useState("");
   const [note, setNote] = useState<{ tone: "info" | "warn"; text: string } | null>(null);
   const [projectId, setProjectId] = useState("");
+  const [invoiceTypeId, setInvoiceTypeId] = useState("");
   const [notes, setNotes] = useState("");
   const [f, setF] = useState({ vendorName: "", vendorVatNo: "", invoiceNumber: "", invoiceDate: "", subtotal: "", vatAmount: "", total: "" });
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF((p) => ({ ...p, [k]: e.target.value }));
@@ -145,6 +171,7 @@ export function NewExpenseForm({
     fd.append("intent", submitter?.value === "submit" ? "submit" : "save");
     fd.append("qr", qr);
     fd.append("projectId", projectId);
+    fd.append("invoiceTypeId", invoiceTypeId);
     fd.append("notes", notes);
     for (const [k, v] of Object.entries(f)) fd.append(k, v);
     for (const file of files) fd.append("files", file);
@@ -169,6 +196,8 @@ export function NewExpenseForm({
           </select>
         </div>
       </div>
+
+      <TypeSelect types={types} value={invoiceTypeId} onChange={setInvoiceTypeId} />
 
       <div>
         <label className={labelCls} htmlFor="files">{t("files")} *</label>
@@ -244,6 +273,7 @@ export function NewExpenseForm({
 export type ExpenseValues = {
   companyId: string;
   projectId: string | null;
+  invoiceTypeId: string | null;
   vendorName: string;
   vendorVatNo: string;
   invoiceNumber: string;
@@ -258,6 +288,7 @@ export function ExpenseEditForm({
   action,
   companyName,
   projects,
+  types,
   values,
   locale,
   rejected,
@@ -265,6 +296,7 @@ export function ExpenseEditForm({
   action: (prev: FormState, fd: FormData) => Promise<FormState>;
   companyName: string;
   projects: ProjectOption[];
+  types: TypeOption[];
   values: ExpenseValues;
   locale: string;
   rejected: boolean;
@@ -280,6 +312,7 @@ export function ExpenseEditForm({
         <CompanyBadge name={companyName} />
         <ProjectSelect projects={projects} projectId={values.projectId} />
       </div>
+      <TypeSelect types={types} defaultValue={values.invoiceTypeId} />
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="sm:col-span-2">
           <label className={labelCls} htmlFor="vendorName">{t("vendor")} *</label>
