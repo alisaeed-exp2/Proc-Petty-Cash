@@ -79,6 +79,8 @@
     "print": "Print / Save as PDF",
     "back": "Back to reports",
     "rowsCount": "{count} rows",
-    "invoiceType": "Invoice type"
+    "invoiceType": "Invoice type",
+    "viewDetails": "View details",
+    "backToConsumption": "Back to consumption history"
   }
 }

@@ -81,6 +81,7 @@ export async function buildReport(
       ],
       sumKeys: ["subtotal", "vat", "total"],
       rows: rows.map((e) => ({
+        id: e.id, // not a column: lets the on-screen history link to the entry
         invoiceDate: e.invoiceDate,
         agent: e.agent.name,
         company: localName(e.company, locale),

@@ -78,12 +78,19 @@ export default async function ConsumptionPage({
                     {row.project ? <div className="text-xs text-muted">{row.project as string}</div> : null}
                     {row.invoiceType ? <div className="text-xs text-muted">{row.invoiceType as string}</div> : null}
                   </td>
-                  <td className={td}>{(row.vendor as string | null) ?? "-"}</td>
+                  <td className={td}>
+                    <Link href={`/consumption/${row.id as string}`} className="font-medium text-ocean underline underline-offset-4">
+                      {(row.vendor as string | null) ?? "-"}
+                    </Link>
+                  </td>
                   <td className={`${td} num`}>{(row.invoiceNo as string | null) ?? "-"}</td>
                   <td className={tdNum}>{typeof row.vat === "number" ? formatHalalas(Math.round(row.vat * 100)) : "-"}</td>
                   <td className={tdNum}>{typeof row.total === "number" ? formatHalalas(Math.round(row.total * 100)) : "-"}</td>
                   <td className={td}>
                     <FlagBadges overspend={!!row.overspend} duplicate={!!row.duplicate} />
+                    <Link href={`/consumption/${row.id as string}`} className="mt-1 inline-block whitespace-nowrap text-sm text-ocean underline underline-offset-4">
+                      {r("viewDetails")}
+                    </Link>
                   </td>
                 </tr>
               ))}

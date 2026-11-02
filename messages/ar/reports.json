@@ -79,6 +79,8 @@
     "print": "طباعة / حفظ كـ PDF",
     "back": "العودة إلى التقارير",
     "rowsCount": "{count} صف",
-    "invoiceType": "نوع الفاتورة"
+    "invoiceType": "نوع الفاتورة",
+    "viewDetails": "عرض التفاصيل",
+    "backToConsumption": "العودة إلى سجل الاستهلاك"
   }
 }
