@@ -240,7 +240,7 @@ async function ControllerDashboard({ companyId, locale, t, c }: { companyId: str
     prisma.expenseReview.count({ where: { decision: "APPROVED", expense: { companyId } } }),
     prisma.expenseReview.count({ where: { decision: "REJECTED", expense: { companyId } } }),
     prisma.expenseReview.findMany({
-      where: { expense: { companyId } },
+      where: { expense: { companyId, status: { not: "DRAFT" } } },
       orderBy: { createdAt: "desc" },
       take: 8,
       include: { expense: { select: { id: true, vendorName: true, total: true } }, reviewer: { select: { name: true } } },
@@ -283,7 +283,7 @@ async function ControllerDashboard({ companyId, locale, t, c }: { companyId: str
                     <Link href={`/review/${r.expense.id}`} className="text-ocean underline underline-offset-4">{r.expense.vendorName ?? "-"}</Link>
                   </td>
                   <td className={tdNum}>{r.expense.total === null ? "-" : formatHalalas(r.expense.total)}</td>
-                  <td className={td}><Badge tone={r.decision}>{x(`status.${r.decision}`)}</Badge></td>
+                  <td className={td}><Badge tone={r.decision === "RETURNED" ? "DRAFT" : r.decision}>{x(`status.${r.decision}`)}</Badge></td>
                   <td className={td}>{r.reviewer.name}</td>
                 </tr>
               ))}

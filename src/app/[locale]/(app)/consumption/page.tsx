@@ -3,7 +3,7 @@ import { requireCompany } from "@/lib/company";
 import { buildReport, type Filters } from "@/lib/reports";
 import { formatHalalas } from "@/lib/ledger/money";
 import { formatDate } from "@/lib/format";
-import { Card, Empty, PageHeader, Stat, Table, btnSecondary, td, tdNum, th, thNum } from "@/components/ui";
+import { Card, Empty, Notice, PageHeader, Stat, Table, btnSecondary, td, tdNum, th, thNum } from "@/components/ui";
 import { ReportFilters, exportHref, pdfHref } from "@/components/report-filters";
 import { FlagBadges } from "@/components/expense-view";
 import { Link } from "@/i18n/navigation";
@@ -13,7 +13,7 @@ export default async function ConsumptionPage({
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<Filters>;
+  searchParams: Promise<Filters & { returned?: string }>;
 }) {
   const { locale } = await params;
   const filters = await searchParams;
@@ -44,6 +44,9 @@ export default async function ConsumptionPage({
           </>
         }
       />
+      {filters.returned === "1" && (
+        <div className="mb-4"><Notice tone="good">{r("return.done")}</Notice></div>
+      )}
       <ReportFilters action="/consumption" filters={filters} showAgent companyId={company.id} locale={locale} />
 
       <div className="mb-6 grid gap-4 sm:grid-cols-2">

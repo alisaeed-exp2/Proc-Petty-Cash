@@ -40,6 +40,7 @@ enum ReviewStage {
 enum ReviewDecision {
   APPROVED
   REJECTED
+  RETURNED // approved expense sent back to the agent as a draft
 }
 
 enum LedgerType {

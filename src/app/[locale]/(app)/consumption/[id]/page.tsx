@@ -8,6 +8,8 @@ import { formatDate } from "@/lib/format";
 import { Badge, Card, PageHeader, btnSecondary } from "@/components/ui";
 import { FileViewer, FlagBadges, ReviewHistory } from "@/components/expense-view";
 import { Link } from "@/i18n/navigation";
+import { ReturnForm } from "@/components/return-form";
+import { returnToDraftAction } from "../actions";
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -22,7 +24,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 export default async function ConsumptionDetailPage({ params }: { params: Promise<{ locale: string; id: string }> }) {
   const { locale, id } = await params;
   setRequestLocale(locale);
-  const { company } = await requireCompany(locale, ["MANAGER", "CONTROLLER"]);
+  const { user, company } = await requireCompany(locale, ["MANAGER", "CONTROLLER"]);
   const x = await getTranslations("expenses");
   const c = await getTranslations("common");
   const r = await getTranslations("reports");
@@ -76,6 +78,12 @@ export default async function ConsumptionDetailPage({ params }: { params: Promis
               {e.notes && <Row label={c("notes")}>{e.notes}</Row>}
             </dl>
           </Card>
+
+          {(user.role === "MANAGER" || user.role === "SYSTEM_ADMIN") && (
+            <Card title={r("return.title")}>
+              <ReturnForm action={returnToDraftAction.bind(null, e.id)} locale={locale} />
+            </Card>
+          )}
 
           <ReviewHistory
             locale={locale}

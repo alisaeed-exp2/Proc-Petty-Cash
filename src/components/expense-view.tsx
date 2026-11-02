@@ -50,7 +50,7 @@ export async function FileViewer({ files, locale }: { files: ViewFile[]; locale:
   );
 }
 
-export type ReviewItem = { id: string; decision: "APPROVED" | "REJECTED"; reason: string | null; createdAt: Date; reviewerName: string; stage: "CONTROLLER" | "MANAGER" };
+export type ReviewItem = { id: string; decision: "APPROVED" | "REJECTED" | "RETURNED"; reason: string | null; createdAt: Date; reviewerName: string; stage: "CONTROLLER" | "MANAGER" };
 
 export async function ReviewHistory({ reviews, locale }: { reviews: ReviewItem[]; locale: string }) {
   const t = await getTranslations("expenses");
@@ -61,7 +61,7 @@ export async function ReviewHistory({ reviews, locale }: { reviews: ReviewItem[]
         {reviews.map((r) => (
           <li key={r.id}>
             <div className="flex flex-wrap items-center gap-2">
-              <Badge tone={r.decision}>{t(`status.${r.decision}`)}</Badge>
+              <Badge tone={r.decision === "RETURNED" ? "DRAFT" : r.decision}>{t(`status.${r.decision}`)}</Badge>
               <span className="text-xs text-muted">{t(`stage.${r.stage}`)}</span>
               <span className="font-medium">{r.reviewerName}</span>
               <span className="text-xs text-muted">{formatDateTime(r.createdAt, locale)}</span>

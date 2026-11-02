@@ -23,6 +23,9 @@ const TEXT = {
     awaitingSubject: (agent: string, total: string) => `Waiting for your approval: ${agent}, ${total} SAR`,
     awaitingBody: (agent: string, vendor: string, total: string) =>
       `The expense controller approved an invoice from ${vendor} for ${total} SAR submitted by ${agent}. It now needs your final approval.`,
+    returnedSubject: (total: string) => `Your invoice was returned to draft (${total} SAR)`,
+    returnedBody: (vendor: string, total: string, reason: string) =>
+      `Your approved invoice from ${vendor} for ${total} SAR was returned to you as a draft. Reason: ${reason}. It no longer counts as consumed. Please correct it and submit it again.`,
     open: "Open in the app",
   },
   ar: {
@@ -41,6 +44,9 @@ const TEXT = {
     awaitingSubject: (agent: string, total: string) => `بانتظار اعتمادك: ${agent}، ${total} ريال`,
     awaitingBody: (agent: string, vendor: string, total: string) =>
       `اعتمد مراقب المصروفات فاتورة من ${vendor} بمبلغ ${total} ريال أرسلها ${agent}. وهي الآن بحاجة إلى اعتمادك النهائي.`,
+    returnedSubject: (total: string) => `أُعيدت فاتورتك كمسودة (${total} ريال)`,
+    returnedBody: (vendor: string, total: string, reason: string) =>
+      `أُعيدت إليك فاتورتك المعتمدة من ${vendor} بمبلغ ${total} ريال كمسودة. السبب: ${reason}. لم تعد محتسبة ضمن الاستهلاك. يرجى تصحيحها وإعادة إرسالها.`,
     open: "فتح في التطبيق",
   },
 } as const;
@@ -77,6 +83,23 @@ async function send(to: string, subject: string, lang: Lang, body: string, path:
     signal: AbortSignal.timeout(15_000),
   });
   if (!res.ok) console.error("email send failed", res.status, (await res.text().catch(() => "")).slice(0, 200));
+}
+
+/** An approved invoice was sent back to the agent as a draft. */
+export async function notifyReturned(expenseId: string): Promise<void> {
+  if (!(await getSetting("RESEND_API_KEY"))) return;
+  const e = await prisma.expense.findUnique({
+    where: { id: expenseId },
+    include: {
+      agent: { select: { email: true, locale: true } },
+      reviews: { where: { decision: "RETURNED" }, orderBy: { createdAt: "desc" }, take: 1 },
+    },
+  });
+  if (!e) return;
+  const l = lang(e.agent.locale);
+  const t = TEXT[l];
+  const total = formatHalalas(e.total ?? 0);
+  await send(e.agent.email, t.returnedSubject(total), l, t.returnedBody(e.vendorName ?? "-", total, e.reviews[0]?.reason ?? "-"), `/expenses/${e.id}`);
 }
 
 const lang = (l: string): Lang => (l === "ar" ? "ar" : "en");

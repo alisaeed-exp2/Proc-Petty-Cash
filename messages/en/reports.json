@@ -81,6 +81,24 @@
     "rowsCount": "{count} rows",
     "invoiceType": "Invoice type",
     "viewDetails": "View details",
-    "backToConsumption": "Back to consumption history"
+    "backToConsumption": "Back to consumption history",
+    "return": {
+      "title": "Return to agent",
+      "button": "Return to agent",
+      "hint": "The invoice goes back to the agent as a draft and can be edited. It stops counting as consumed right away, in balances, the dashboard and the reports, until it is approved again.",
+      "reason": "Reason",
+      "reasonHint": "Tell the agent what to correct",
+      "confirm": "Return this invoice to the agent as a draft?",
+      "submit": "Return as draft",
+      "working": "Returning...",
+      "cancel": "Cancel",
+      "done": "The invoice was returned to the agent as a draft and removed from the consumption.",
+      "errors": {
+        "unauthorized": "You are not allowed to do that.",
+        "notFound": "Not found.",
+        "notApproved": "This invoice is not approved any more.",
+        "reasonRequired": "Enter a reason (at least 3 characters)."
+      }
+    }
   }
 }

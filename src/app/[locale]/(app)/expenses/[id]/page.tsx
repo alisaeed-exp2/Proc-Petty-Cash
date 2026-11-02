@@ -51,6 +51,7 @@ export default async function ExpensePage({
 
   const editable = e.status === "DRAFT" || e.status === "REJECTED";
   const lastRejection = e.reviews.find((r) => r.decision === "REJECTED");
+  const returned = e.status === "DRAFT" && e.reviews[0]?.decision === "RETURNED" ? e.reviews[0] : null;
 
   let projects: { id: string; name: string }[] = [];
   if (editable) {
@@ -91,6 +92,13 @@ export default async function ExpensePage({
               <strong>{t("rejectedTitle")}</strong>
               {lastRejection?.reason && <span> {lastRejection.reason}</span>}
               <div className="mt-1 text-xs">{t("rejectedNote")}</div>
+            </Notice>
+          )}
+          {returned && (
+            <Notice tone="warn">
+              <strong>{t("returnedTitle")}</strong>
+              {returned.reason && <span> {returned.reason}</span>}
+              <div className="mt-1 text-xs">{t("returnedNote")}</div>
             </Notice>
           )}
           {e.status === "DRAFT" && ocr === "done" && <Notice tone="info">{t("ocrDone")}</Notice>}

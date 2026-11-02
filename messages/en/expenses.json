@@ -48,7 +48,8 @@
       "SUBMITTED": "Awaiting controller",
       "APPROVED": "Approved",
       "REJECTED": "Rejected",
-      "CONTROLLER_APPROVED": "Awaiting manager approval"
+      "CONTROLLER_APPROVED": "Awaiting manager approval",
+      "RETURNED": "Returned to draft"
     },
     "flags": {
       "overspend": "Over limit",
@@ -90,6 +91,8 @@
     "saving": "Saving…",
     "invoiceType": "Invoice type",
     "chooseType": "Choose an invoice type",
-    "noTypes": "No invoice types are set up yet. Ask the Procurement Manager to add them."
+    "noTypes": "No invoice types are set up yet. Ask the Procurement Manager to add them.",
+    "returnedTitle": "Returned to draft by the Procurement Manager.",
+    "returnedNote": "You can correct it and submit it again."
   }
 }
