@@ -97,8 +97,8 @@ export function NewExpenseForm({
   const [files, setFiles] = useState<File[]>([]);
   const [qr, setQr] = useState("");
   const [note, setNote] = useState<{ tone: "info" | "warn"; text: string } | null>(null);
-  const [projectId, setProjectId] = useState(first?.projectId ?? "");
   const first = originals.find((o) => o.id === initialRefundOf);
+  const [projectId, setProjectId] = useState(first?.projectId ?? "");
   const [invoiceTypeId, setInvoiceTypeId] = useState(first?.typeId ?? "");
   const [refundOfId, setRefundOfId] = useState(first?.id ?? "");
   const refund = kind === "REFUND";
