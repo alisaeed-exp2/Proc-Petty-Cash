@@ -54,8 +54,21 @@ export async function createExpenseAction(_prev: FormState, formData: FormData):
   const read = await readUploads(formData.getAll("files"), { required: true });
   if ("error" in read) return { ok: false, error: read.error };
 
+  const kind = formData.get("kind") === "REFUND" ? "REFUND" : "EXPENSE";
+  let refundOfId: string | null = null;
+  if (kind === "REFUND") {
+    refundOfId = opt(formData.get("refundOfId")) ?? null;
+    if (refundOfId) {
+      const original = await prisma.expense.findFirst({
+        where: { id: refundOfId, agentId: me.id, companyId: ctx.company.id, kind: "EXPENSE", status: "APPROVED" },
+        select: { id: true },
+      });
+      if (!original) return { ok: false, error: "badRefundOf" };
+    }
+  }
+
   // Every record is created under the company the agent is currently working in.
-  const expense = await prisma.expense.create({ data: { agentId: me.id, companyId: ctx.company.id } });
+  const expense = await prisma.expense.create({ data: { agentId: me.id, companyId: ctx.company.id, kind, refundOfId } });
   const qr = parseZatcaQr(String(formData.get("qr") ?? ""));
   const res = await persistExpense(expense, me, formData, read, qr);
   if (!res.ok) {
@@ -63,7 +76,7 @@ export async function createExpenseAction(_prev: FormState, formData: FormData):
     await prisma.expense.delete({ where: { id: expense.id } }).catch(() => null);
     return res;
   }
-  await audit(me.id, "expense.create", "Expense", expense.id, { qr: !!qr, submitted: res.info === "submitted" });
+  await audit(me.id, kind === "REFUND" ? "refund.create" : "expense.create", "Expense", expense.id, { qr: !!qr, refundOfId, submitted: res.info === "submitted" });
   revalidatePath("/", "layout");
   if (res.info === "submitted") return redirect({ href: "/expenses?submitted=1", locale });
   return redirect({ href: `/expenses/${expense.id}`, locale });
@@ -135,7 +148,7 @@ function opt(v: FormDataEntryValue | null): string | undefined {
   return s ? s : undefined;
 }
 
-type Draft = { id: string; invoiceTypeId?: string | null; status: "DRAFT" | "SUBMITTED" | "CONTROLLER_APPROVED" | "APPROVED" | "REJECTED"; companyId: string };
+type Draft = { id: string; kind?: "EXPENSE" | "REFUND"; refundOfId?: string | null; invoiceTypeId?: string | null; status: "DRAFT" | "SUBMITTED" | "CONTROLLER_APPROVED" | "APPROVED" | "REJECTED"; companyId: string };
 
 /** Validates the form, stores any new files and saves (or submits) the expense. Shared by create and edit. */
 async function persistExpense(
@@ -181,6 +194,18 @@ async function persistExpense(
 
   if (read.files.length > 0 && !(await storageConfigured())) return { ok: false, error: "storage" };
 
+  // A refund linked to an invoice cannot return more than that invoice was worth.
+  if (expense.kind === "REFUND" && expense.refundOfId && total !== null) {
+    const [original, others] = await Promise.all([
+      prisma.expense.findUnique({ where: { id: expense.refundOfId }, select: { total: true } }),
+      prisma.expense.aggregate({
+        where: { refundOfId: expense.refundOfId, id: { not: expense.id }, status: { in: ["SUBMITTED", "CONTROLLER_APPROVED", "APPROVED"] } },
+        _sum: { total: true },
+      }),
+    ]);
+    if (original?.total != null && total + (others._sum.total ?? 0) > original.total) return { ok: false, error: "refundTooLarge" };
+  }
+
   if (submit) {
     if (!d.invoiceTypeId) return { ok: false, error: "typeRequired" };
     if (!d.vendorName || !invoiceDate || total === null || total <= 0) return { ok: false, error: "requiredFields" };
@@ -214,7 +239,8 @@ async function persistExpense(
 
   // Flags are decided at the moment of submission.
   const bal = await getAgentBalance(expense.companyId, me.id);
-  const overspendFlag = isOverspend(total as number, bal.available);
+  // A refund reduces spending, so it can never be over the limit.
+  const overspendFlag = expense.kind === "REFUND" ? false : isOverspend(total as number, bal.available);
 
   const key = duplicateKey(vatNo, d.invoiceNumber, total);
   let duplicateFlag = false;

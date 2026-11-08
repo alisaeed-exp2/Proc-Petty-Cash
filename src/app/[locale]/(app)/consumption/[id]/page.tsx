@@ -36,6 +36,7 @@ export default async function ConsumptionDetailPage({ params }: { params: Promis
       company: true,
       project: true,
       invoiceType: true,
+      refundOf: { select: { id: true, vendorName: true, invoiceNumber: true } },
       files: { orderBy: { uploadedAt: "asc" } },
       reviews: { orderBy: { createdAt: "desc" }, include: { reviewer: { select: { name: true } } } },
     },
@@ -49,6 +50,7 @@ export default async function ConsumptionDetailPage({ params }: { params: Promis
         subtitle={`${e.agent.name} · ${localName(e.company, locale)}${e.project ? " · " + localName(e.project, locale) : ""}`}
         actions={
           <>
+            {e.kind === "REFUND" && <Badge tone="INFO">{x("refundBadge")}</Badge>}
             <Badge tone={e.status}>{x(`status.${e.status}`)}</Badge>
             <FlagBadges overspend={e.overspendFlag} duplicate={e.duplicateFlag} />
             <Link href="/consumption" className={btnSecondary}>{r("backToConsumption")}</Link>
@@ -67,6 +69,9 @@ export default async function ConsumptionDetailPage({ params }: { params: Promis
               <Row label={c("agent")}>{e.agent.name}</Row>
               <Row label={c("company")}>{localName(e.company, locale)}</Row>
               <Row label={c("project")}>{e.project ? localName(e.project, locale) : "-"}</Row>
+              {e.kind === "REFUND" && (
+                <Row label={x("refundOf")}>{e.refundOf ? `${e.refundOf.vendorName ?? "-"} · ${e.refundOf.invoiceNumber ?? "-"}` : "-"}</Row>
+              )}
               <Row label={x("invoiceType")}>{e.invoiceType ? localName(e.invoiceType, locale) : "-"}</Row>
               <Row label={x("vendor")}>{e.vendorName ?? "-"}</Row>
               <Row label={x("vatNo")}><span className="num">{e.vendorVatNo ?? "-"}</span></Row>
@@ -74,7 +79,7 @@ export default async function ConsumptionDetailPage({ params }: { params: Promis
               <Row label={x("invoiceDate")}>{formatDate(e.invoiceDate, locale)}</Row>
               <Row label={x("subtotal")}><span className="num">{e.subtotal === null ? "-" : formatHalalas(e.subtotal)}</span></Row>
               <Row label={x("vat")}><span className="num">{e.vatAmount === null ? "-" : formatHalalas(e.vatAmount)}</span></Row>
-              <Row label={x("total")}><span className="num">{e.total === null ? "-" : `${formatHalalas(e.total)} ${c("currency")}`}</span></Row>
+              <Row label={x("total")}><span className="num">{e.total === null ? "-" : `${e.kind === "REFUND" ? "-" : ""}${formatHalalas(e.total)} ${c("currency")}`}</span></Row>
               {e.notes && <Row label={c("notes")}>{e.notes}</Row>}
             </dl>
           </Card>

@@ -56,6 +56,7 @@ export default async function ReviewDetailPage({ params }: { params: Promise<{ l
         subtitle={`${e.agent.name} · ${localName(e.company, locale)}${e.project ? " · " + localName(e.project, locale) : ""}`}
         actions={
           <>
+            {e.kind === "REFUND" && <Badge tone="INFO">{x("refundBadge")}</Badge>}
             <Badge tone={e.status}>{x(`status.${e.status}`)}</Badge>
             <FlagBadges overspend={e.overspendFlag} duplicate={e.duplicateFlag} />
             <Link href="/review" className={btnSecondary}>{c("back")}</Link>

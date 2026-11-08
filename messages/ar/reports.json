@@ -71,7 +71,8 @@
       "status": "الحالة",
       "submittedAt": "تاريخ الإرسال",
       "reason": "سبب الرفض",
-      "invoiceType": "نوع الفاتورة"
+      "invoiceType": "نوع الفاتورة",
+      "entryKind": "النوع"
     },
     "downloadExcel": "Excel",
     "downloadPdf": "PDF",
@@ -99,6 +100,10 @@
         "notApproved": "هذه الفاتورة لم تعد معتمدة.",
         "reasonRequired": "أدخل السبب (3 أحرف على الأقل)."
       }
+    },
+    "kinds": {
+      "EXPENSE": "مصروف",
+      "REFUND": "مرتجع"
     }
   }
 }

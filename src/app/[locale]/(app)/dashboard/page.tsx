@@ -32,10 +32,11 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
 
 async function AgentDashboard({ user, companyId, locale, t, c }: { user: AppUser; companyId: string; locale: string; t: T; c: T }) {
   const x = await getTranslations("expenses");
-  const [bal, recent, counts] = await Promise.all([
+  const [bal, recent, counts, refunds] = await Promise.all([
     getAgentBalance(companyId, user.id),
     prisma.expense.findMany({ where: { agentId: user.id, companyId }, orderBy: { createdAt: "desc" }, take: 6, include: { company: true } }),
     prisma.expense.groupBy({ by: ["status"], where: { agentId: user.id, companyId }, _count: true }),
+    prisma.expense.aggregate({ where: { agentId: user.id, companyId, kind: "REFUND", status: "APPROVED" }, _sum: { total: true }, _count: true }),
   ]);
   const count = (s: string) =>
     s === "SUBMITTED"
@@ -49,11 +50,12 @@ async function AgentDashboard({ user, companyId, locale, t, c }: { user: AppUser
           <Notice tone="warn">{t("agent.unresolvedNote", { amount: formatHalalas(bal.unresolved), count: count("REJECTED") })}</Notice>
         </div>
       )}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <Stat label={t("allocated")} value={formatHalalas(bal.netAllocated)} unit={c("currency")} hint={bal.returned > 0 ? t("agent.returnedHint", { amount: formatHalalas(bal.returned) }) : undefined} />
         <Stat label={t("consumed")} value={formatHalalas(bal.consumed)} unit={c("currency")} hint={`${bal.percentConsumed}% ${t("ofAllocation")}`} />
         <Stat label={t("residual")} value={formatHalalas(bal.cashOnHand)} unit={c("currency")} tone={bal.cashOnHand < 0 ? "bad" : "default"} />
         <Stat label={t("available")} value={formatHalalas(bal.available)} unit={c("currency")} tone={bal.available < 0 ? "bad" : "good"} hint={t("availableHint")} />
+        <Stat label={t("refunds")} value={formatHalalas(refunds._sum.total ?? 0)} unit={c("currency")} hint={t("refundsHint", { count: refunds._count })} tone="gold" />
       </div>
 
       <div className="mt-6 grid gap-6 xl:grid-cols-[1fr_20rem]">
@@ -119,17 +121,18 @@ async function AgentDashboard({ user, companyId, locale, t, c }: { user: AppUser
 }
 
 async function ManagerDashboard({ companyId, locale, t, c, readOnly = false }: { companyId: string; locale: string; t: T; c: T; readOnly?: boolean }) {
-  const [summary, agents, pendingFlags, awaitingMe, byProject, projects, expenseEntries] = await Promise.all([
+  const [summary, agents, pendingFlags, awaitingMe, byProject, projects, expenseEntries, refunds] = await Promise.all([
     getManagerSummary(companyId),
     getAllAgentBalances(companyId),
     prisma.expense.groupBy({ by: ["overspendFlag", "duplicateFlag"], where: { companyId, status: { in: ["SUBMITTED", "CONTROLLER_APPROVED"] } }, _count: true }),
     prisma.expense.count({ where: { companyId, status: "CONTROLLER_APPROVED" } }),
-    prisma.expense.groupBy({ by: ["projectId"], where: { companyId, status: "APPROVED" }, _sum: { total: true } }),
+    prisma.expense.groupBy({ by: ["projectId", "kind"], where: { companyId, status: "APPROVED" }, _sum: { total: true } }),
     prisma.project.findMany({ where: { companyId }, select: { id: true, nameEn: true, nameAr: true } }),
     prisma.ledgerEntry.findMany({
       where: { companyId, type: { in: ["EXPENSE", "ADJUSTMENT"] }, occurredAt: { gte: new Date(Date.now() - 200 * 24 * 3600 * 1000) } },
       select: { amount: true, occurredAt: true },
     }),
+    prisma.expense.aggregate({ where: { companyId, kind: "REFUND", status: "APPROVED" }, _sum: { total: true }, _count: true }),
   ]);
 
   const flagged = pendingFlags.filter((r) => r.overspendFlag || r.duplicateFlag).reduce((n, r) => n + r._count, 0);
@@ -146,8 +149,14 @@ async function ManagerDashboard({ companyId, locale, t, c, readOnly = false }: {
   }
 
   const projectName = new Map(projects.map((p) => [p.id, localName(p, locale)]));
-  const companyBars = byProject
-    .map((r) => ({ label: r.projectId ? (projectName.get(r.projectId) ?? "-") : t("manager.noProject"), value: r._sum.total ?? 0 }))
+  // Per project: expenses minus refunds.
+  const perProject = new Map<string, number>();
+  for (const r of byProject) {
+    const key = r.projectId ?? "";
+    perProject.set(key, (perProject.get(key) ?? 0) + (r.kind === "REFUND" ? -1 : 1) * (r._sum.total ?? 0));
+  }
+  const companyBars = [...perProject.entries()]
+    .map(([id, value]) => ({ label: id ? (projectName.get(id) ?? "-") : t("manager.noProject"), value }))
     .filter((r) => r.value > 0)
     .sort((a, b) => b.value - a.value)
     .slice(0, 8);
@@ -172,6 +181,7 @@ async function ManagerDashboard({ companyId, locale, t, c, readOnly = false }: {
         <Stat label={t("manager.allocated")} value={formatHalalas(summary.allocated - summary.returned)} unit={c("currency")} hint={`${summary.percentAllocated}% ${t("manager.ofFunded")}`} />
         <Stat label={t("manager.pool")} value={formatHalalas(summary.unallocatedPool)} unit={c("currency")} tone="gold" />
         <Stat label={t("consumed")} value={formatHalalas(summary.consumed)} unit={c("currency")} hint={`${summary.percentConsumed}% ${t("manager.ofFunded")}`} />
+        <Stat label={t("refunds")} value={formatHalalas(refunds._sum.total ?? 0)} unit={c("currency")} hint={t("refundsHint", { count: refunds._count })} tone="gold" />
         <Stat label={t("pending")} value={formatHalalas(summary.pending)} unit={c("currency")} hint={t("manager.invoices", { count: pendingCount })} tone="warn" />
         <Stat label={t("unresolved")} value={formatHalalas(summary.unresolved)} unit={c("currency")} tone={summary.unresolved > 0 ? "bad" : "default"} />
         <Stat label={t("manager.residual")} value={formatHalalas(summary.allocated - summary.returned - summary.consumed)} unit={c("currency")} hint={t("manager.residualHint")} />

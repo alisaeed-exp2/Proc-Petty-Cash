@@ -15,7 +15,7 @@ import type { FormState } from "@/components/action-form";
  * Two-step approval:
  *   SUBMITTED -> (controller approves) -> CONTROLLER_APPROVED -> (manager approves) -> APPROVED
  * Either reviewer can reject at their own step, which sends it back to the agent as REJECTED.
- * Only the final approval writes the EXPENSE ledger entry.
+ * Only the final approval writes the ledger entry (EXPENSE, or a negative ADJUSTMENT for a refund).
  */
 function stepFor(me: AppUser, status: ExpenseStatus): { stage: ReviewStage; from: ExpenseStatus; approvedTo: ExpenseStatus } | null {
   const asManager = { stage: "MANAGER", from: "CONTROLLER_APPROVED", approvedTo: "APPROVED" } as const;
@@ -47,15 +47,17 @@ async function decideOne(me: AppUser, companyId: string, expenseId: string, appr
       data: { expenseId, reviewerId: me.id, stage: step.stage, decision: approve ? "APPROVED" : "REJECTED", reason: reason || null },
     });
     if (approve && step.approvedTo === "APPROVED") {
+      // A refund is deducted from consumption: a negative ADJUSTMENT (consumed = EXPENSE + signed ADJUSTMENT).
+      const refund = expense.kind === "REFUND";
       await tx.ledgerEntry.create({
         data: {
-          type: "EXPENSE",
+          type: refund ? "ADJUSTMENT" : "EXPENSE",
           companyId: expense.companyId,
           agentId: expense.agentId,
-          amount: expense.total as number,
+          amount: refund ? -(expense.total as number) : (expense.total as number),
           occurredAt: expense.invoiceDate ?? new Date(),
           expenseId,
-          note: expense.vendorName ?? null,
+          note: refund ? `Refund: ${expense.vendorName ?? "-"}` : (expense.vendorName ?? null),
         },
       });
     }

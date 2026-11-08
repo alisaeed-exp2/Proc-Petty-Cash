@@ -8,6 +8,7 @@ import type { ReadInvoiceResult } from "@/app/[locale]/(app)/expenses/actions";
 
 export type ProjectOption = { id: string; name: string };
 export type TypeOption = { id: string; name: string };
+export type RefundOriginal = { id: string; label: string; typeId: string | null; projectId: string | null };
 
 function TypeSelect({ types, value, onChange, defaultValue }: { types: TypeOption[]; value?: string; onChange?: (v: string) => void; defaultValue?: string | null }) {
   const t = useTranslations("expenses");
@@ -74,6 +75,9 @@ export function NewExpenseForm({
   projects,
   types,
   locale,
+  kind = "EXPENSE",
+  originals = [],
+  initialRefundOf = "",
 }: {
   action: (prev: FormState, fd: FormData) => Promise<FormState>;
   readAction: (fd: FormData) => Promise<ReadInvoiceResult>;
@@ -81,6 +85,9 @@ export function NewExpenseForm({
   projects: ProjectOption[];
   types: TypeOption[];
   locale: string;
+  kind?: "EXPENSE" | "REFUND";
+  originals?: RefundOriginal[];
+  initialRefundOf?: string;
 }) {
   const t = useTranslations("expenses");
   const c = useTranslations("common");
@@ -90,8 +97,11 @@ export function NewExpenseForm({
   const [files, setFiles] = useState<File[]>([]);
   const [qr, setQr] = useState("");
   const [note, setNote] = useState<{ tone: "info" | "warn"; text: string } | null>(null);
-  const [projectId, setProjectId] = useState("");
-  const [invoiceTypeId, setInvoiceTypeId] = useState("");
+  const [projectId, setProjectId] = useState(first?.projectId ?? "");
+  const first = originals.find((o) => o.id === initialRefundOf);
+  const [invoiceTypeId, setInvoiceTypeId] = useState(first?.typeId ?? "");
+  const [refundOfId, setRefundOfId] = useState(first?.id ?? "");
+  const refund = kind === "REFUND";
   const [notes, setNotes] = useState("");
   const [f, setF] = useState({ vendorName: "", vendorVatNo: "", invoiceNumber: "", invoiceDate: "", subtotal: "", vatAmount: "", total: "" });
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF((p) => ({ ...p, [k]: e.target.value }));
@@ -142,15 +152,17 @@ export function NewExpenseForm({
     startReading(async () => {
       const r = await readAction(fd);
       if (r.ok) {
+        // A refund is entered as a positive amount, even when the document shows a minus sign.
+        const pos = (v: string) => (refund ? v.replace(/^-/, "") : v);
         // Only overwrite with what was actually read; keep anything the agent already typed.
         setF((p) => ({
           vendorName: r.fields.vendorName || p.vendorName,
           vendorVatNo: r.fields.vendorVatNo || p.vendorVatNo,
           invoiceNumber: r.fields.invoiceNumber || p.invoiceNumber,
           invoiceDate: r.fields.invoiceDate || p.invoiceDate,
-          subtotal: r.fields.subtotal || p.subtotal,
-          vatAmount: r.fields.vatAmount || p.vatAmount,
-          total: r.fields.total || p.total,
+          subtotal: pos(r.fields.subtotal) || p.subtotal,
+          vatAmount: pos(r.fields.vatAmount) || p.vatAmount,
+          total: pos(r.fields.total) || p.total,
         }));
         setNote({ tone: "info", text: t("ocrDone") });
       } else if (r.error === "ocrOff") {
@@ -172,6 +184,8 @@ export function NewExpenseForm({
     fd.append("qr", qr);
     fd.append("projectId", projectId);
     fd.append("invoiceTypeId", invoiceTypeId);
+    fd.append("kind", kind);
+    if (refund) fd.append("refundOfId", refundOfId);
     fd.append("notes", notes);
     for (const [k, v] of Object.entries(f)) fd.append(k, v);
     for (const file of files) fd.append("files", file);
@@ -196,6 +210,30 @@ export function NewExpenseForm({
           </select>
         </div>
       </div>
+
+      {refund && (
+        <div>
+          <label className={labelCls} htmlFor="refundOfId">{t("refundOf")} ({c("optional")})</label>
+          <select
+            id="refundOfId"
+            value={refundOfId}
+            onChange={(e) => {
+              const id = e.target.value;
+              setRefundOfId(id);
+              const o = originals.find((x) => x.id === id);
+              if (o?.typeId) setInvoiceTypeId(o.typeId);
+              if (o?.projectId) setProjectId(o.projectId);
+            }}
+            className={inputCls}
+          >
+            <option value="">{t("refundOfNone")}</option>
+            {originals.map((o) => (
+              <option key={o.id} value={o.id}>{o.label}</option>
+            ))}
+          </select>
+          <p className={hintCls}>{t("refundHint")}</p>
+        </div>
+      )}
 
       <TypeSelect types={types} value={invoiceTypeId} onChange={setInvoiceTypeId} />
 
@@ -260,7 +298,7 @@ export function NewExpenseForm({
       {pending && <Notice tone="info">{t("saving")}</Notice>}
       <div className="flex flex-wrap gap-3">
         <button type="submit" value="submit" disabled={busy} className={btnPrimary}>
-          {pending ? c("saving") : t("submit")}
+          {pending ? c("saving") : refund ? t("submitRefund") : t("submit")}
         </button>
         <button type="submit" value="save" disabled={busy} className={btnSecondary}>
           {t("saveDraft")}

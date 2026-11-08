@@ -32,6 +32,13 @@ enum ExpenseStatus {
   REJECTED
 }
 
+// A refund invoice (money returned by a vendor) goes through the same approvals as an expense
+// and, once finally approved, is deducted from consumption.
+enum ExpenseKind {
+  EXPENSE
+  REFUND
+}
+
 enum ReviewStage {
   CONTROLLER
   MANAGER
@@ -193,6 +200,10 @@ model Expense {
   company   Company       @relation(fields: [companyId], references: [id])
   projectId String?
   project   Project?      @relation(fields: [projectId], references: [id])
+  kind      ExpenseKind   @default(EXPENSE)
+  refundOfId String?
+  refundOf   Expense?      @relation("Refunds", fields: [refundOfId], references: [id])
+  refunds    Expense[]     @relation("Refunds")
   invoiceTypeId String?
   invoiceType   InvoiceType?  @relation(fields: [invoiceTypeId], references: [id])
   status    ExpenseStatus @default(DRAFT)
@@ -221,6 +232,8 @@ model Expense {
 
   @@index([agentId, status])
   @@index([invoiceTypeId])
+  @@index([kind, status])
+  @@index([refundOfId])
   @@index([status, submittedAt])
   @@index([vendorVatNo, invoiceNumber, total])
 }

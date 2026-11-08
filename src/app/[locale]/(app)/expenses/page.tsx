@@ -5,7 +5,7 @@ import { localName } from "@/lib/names";
 import { getAgentBalance } from "@/lib/ledger/db";
 import { formatHalalas } from "@/lib/ledger/money";
 import { formatDate } from "@/lib/format";
-import { Badge, Card, Empty, Notice, PageHeader, Stat, Table, btnPrimary, td, tdNum, th, thNum } from "@/components/ui";
+import { Badge, Card, Empty, Notice, PageHeader, Stat, Table, btnPrimary, btnSecondary, td, tdNum, th, thNum } from "@/components/ui";
 import { FlagBadges } from "@/components/expense-view";
 import { Link } from "@/i18n/navigation";
 
@@ -37,7 +37,12 @@ export default async function MyExpensesPage({
       <PageHeader
         title={t("listTitle")}
         subtitle={t("listSubtitle")}
-        actions={<Link href="/expenses/new" className={btnPrimary}>{t("newTitle")}</Link>}
+        actions={
+          <>
+            <Link href="/expenses/new?refund=1" className={btnSecondary}>{t("refundTitle")}</Link>
+            <Link href="/expenses/new" className={btnPrimary}>{t("newTitle")}</Link>
+          </>
+        }
       />
       {submitted && <div className="mb-4"><Notice tone="good">{t("info.submitted")}</Notice></div>}
 
@@ -67,7 +72,10 @@ export default async function MyExpensesPage({
               {expenses.map((e) => (
                 <tr key={e.id}>
                   <td className={td}>{formatDate(e.invoiceDate ?? e.createdAt, locale)}</td>
-                  <td className={td}>{e.vendorName ?? <span className="text-muted">{t("notRead")}</span>}</td>
+                  <td className={td}>
+                    {e.vendorName ?? <span className="text-muted">{t("notRead")}</span>}
+                    {e.kind === "REFUND" && <div className="mt-0.5"><Badge tone="INFO">{t("refundBadge")}</Badge></div>}
+                  </td>
                   <td className={td}>
                     {localName(e.company, locale)}
                     {e.project && <div className="text-xs text-muted">{localName(e.project, locale)}</div>}

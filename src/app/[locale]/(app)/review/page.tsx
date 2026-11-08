@@ -88,6 +88,7 @@ export default async function ReviewQueuePage({
               submitted: formatDateTime(e.submittedAt, locale),
               agent: e.agent.name,
               vendor: e.vendorName ?? "-",
+              refund: e.kind === "REFUND",
               company: localName(e.company, locale),
               project: e.project ? localName(e.project, locale) : null,
               total: e.total === null ? "-" : formatHalalas(e.total),

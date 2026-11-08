@@ -44,7 +44,7 @@ export default async function PrintReportPage({
     { role: user.role, userId: user.id, companyId: company.id },
     { from: filters.from, to: filters.to, agentId: filters.agentId, invoiceTypeId: filters.invoiceTypeId },
     locale,
-    { yes: r("yes"), type: (k) => r(`types.${k}`), status: (k) => x(`status.${k}`) },
+    { yes: r("yes"), kind: (k) => r(`kinds.${k}`), type: (k) => r(`types.${k}`), status: (k) => x(`status.${k}`) },
   );
 
   const signatories = await prisma.companySignatory.findMany({

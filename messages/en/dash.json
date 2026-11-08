@@ -48,6 +48,8 @@
       "recent": "Recent decisions",
       "openQueue": "Open review queue",
       "by": "Reviewed by"
-    }
+    },
+    "refunds": "Refunds",
+    "refundsHint": "{count} approved, deducted from consumption"
   }
 }

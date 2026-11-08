@@ -43,6 +43,7 @@ export default async function ExpensePage({
       company: true,
       project: true,
       invoiceType: true,
+      refundOf: { select: { id: true, vendorName: true, invoiceNumber: true } },
       files: { orderBy: { uploadedAt: "asc" } },
       reviews: { orderBy: { createdAt: "desc" }, include: { reviewer: { select: { name: true } } } },
     },
@@ -78,6 +79,7 @@ export default async function ExpensePage({
         subtitle={`${localName(e.company, locale)}${e.project ? " · " + localName(e.project, locale) : ""}`}
         actions={
           <>
+            {e.kind === "REFUND" && <Badge tone="INFO">{t("refundBadge")}</Badge>}
             <Badge tone={e.status}>{t(`status.${e.status}`)}</Badge>
             <FlagBadges overspend={e.overspendFlag} duplicate={e.duplicateFlag} />
             <Link href="/expenses" className={btnSecondary}>{c("back")}</Link>
@@ -130,6 +132,15 @@ export default async function ExpensePage({
               />
             ) : (
               <dl>
+                {e.kind === "REFUND" && (
+                  <Row label={t("refundOf")}>
+                    {e.refundOf ? (
+                      <Link href={`/expenses/${e.refundOf.id}`} className="text-ocean underline underline-offset-4">
+                        {e.refundOf.vendorName ?? "-"} · {e.refundOf.invoiceNumber ?? "-"}
+                      </Link>
+                    ) : "-"}
+                  </Row>
+                )}
                 <Row label={t("invoiceType")}>{e.invoiceType ? localName(e.invoiceType, locale) : "-"}</Row>
                 <Row label={t("vendor")}>{e.vendorName ?? "-"}</Row>
                 <Row label={t("vatNo")}><span className="num">{e.vendorVatNo ?? "-"}</span></Row>
@@ -142,6 +153,13 @@ export default async function ExpensePage({
               </dl>
             )}
           </Card>
+
+          {e.status === "APPROVED" && e.kind === "EXPENSE" && (
+            <Card>
+              <p className="mb-3 text-sm text-muted">{t("refundPrompt")}</p>
+              <Link href={`/expenses/new?refund=1&of=${e.id}`} className={btnSecondary}>{t("refundTitle")}</Link>
+            </Card>
+          )}
 
           {e.status === "DRAFT" && !e.submittedAt && (
             <Card>

@@ -10,6 +10,7 @@ export type Scope = { role: Role; userId: string; companyId: string };
 export type Filters = { from?: string; to?: string; agentId?: string; invoiceTypeId?: string };
 export type Labels = {
   yes: string;
+  kind: (k: string) => string;
   type: (k: string) => string;
   status: (k: string) => string;
 };
@@ -19,6 +20,7 @@ export type Col = { key: string; width: number; kind: Kind };
 export type Cell = string | number | Date | null;
 export type ReportData = { cols: Col[]; rows: Record<string, Cell>[]; sumKeys: string[] };
 
+const sign = (kind: string, h: number | null) => (h === null ? null : kind === "REFUND" ? -h : h);
 const sar = (h: number | null) => (h === null ? null : h / 100);
 
 function range(f: Filters): { gte?: Date; lte?: Date } | undefined {
@@ -64,6 +66,7 @@ export async function buildReport(
     return {
       cols: [
         { key: "invoiceDate", width: 13, kind: "date" },
+        { key: "entryKind", width: 12, kind: "text" },
         { key: "agent", width: 22, kind: "text" },
         { key: "company", width: 26, kind: "text" },
         { key: "project", width: 24, kind: "text" },
@@ -82,6 +85,8 @@ export async function buildReport(
       sumKeys: ["subtotal", "vat", "total"],
       rows: rows.map((e) => ({
         id: e.id, // not a column: lets the on-screen history link to the entry
+        kind: e.kind, // not a column: raw kind for the on-screen badge
+        entryKind: labels.kind(e.kind),
         invoiceDate: e.invoiceDate,
         agent: e.agent.name,
         company: localName(e.company, locale),
@@ -90,9 +95,10 @@ export async function buildReport(
         vendor: e.vendorName,
         vatNo: e.vendorVatNo,
         invoiceNo: e.invoiceNumber,
-        subtotal: sar(e.subtotal),
-        vat: sar(e.vatAmount),
-        total: sar(e.total),
+        // Refunds are shown negative: they are deducted from consumption.
+        subtotal: sar(sign(e.kind, e.subtotal)),
+        vat: sar(sign(e.kind, e.vatAmount)),
+        total: sar(sign(e.kind, e.total)),
         overspend: e.overspendFlag ? labels.yes : null,
         duplicate: e.duplicateFlag ? labels.yes : null,
         approvedAt: e.reviews[0]?.createdAt ?? null,
@@ -157,9 +163,9 @@ export async function buildReport(
         total: 0,
       };
       g.count += 1;
-      g.subtotal += e.subtotal ?? 0;
-      g.vat += e.vatAmount ?? 0;
-      g.total += e.total ?? 0;
+      g.subtotal += sign(e.kind, e.subtotal) ?? 0;
+      g.vat += sign(e.kind, e.vatAmount) ?? 0;
+      g.total += sign(e.kind, e.total) ?? 0;
       groups.set(key, g);
     }
     return {
@@ -229,6 +235,7 @@ export async function buildReport(
   return {
     cols: [
       { key: "status", width: 18, kind: "text" },
+      { key: "entryKind", width: 12, kind: "text" },
       { key: "submittedAt", width: 13, kind: "date" },
       { key: "agent", width: 22, kind: "text" },
       { key: "company", width: 26, kind: "text" },
@@ -244,6 +251,7 @@ export async function buildReport(
     sumKeys: ["total"],
     rows: rows.map((e) => ({
       status: labels.status(e.status),
+      entryKind: labels.kind(e.kind),
       submittedAt: e.submittedAt,
       agent: e.agent.name,
       company: localName(e.company, locale),

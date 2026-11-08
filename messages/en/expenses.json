@@ -78,7 +78,9 @@
       "inconsistent": "Subtotal plus VAT does not equal the total. Please check the amounts.",
       "notDeletable": "Only drafts that were never submitted can be deleted.",
       "badType": "Choose a valid invoice type.",
-      "typeRequired": "Choose the invoice type to submit."
+      "typeRequired": "Choose the invoice type to submit.",
+      "badRefundOf": "Choose one of your approved invoices, or leave it empty.",
+      "refundTooLarge": "This refund is more than the invoice it belongs to (together with its other refunds)."
     },
     "deleteDraft": "Delete draft",
     "deleteConfirm": "Delete this draft and its uploaded files? This cannot be undone.",
@@ -93,6 +95,14 @@
     "chooseType": "Choose an invoice type",
     "noTypes": "No invoice types are set up yet. Ask the Procurement Manager to add them.",
     "returnedTitle": "Returned to draft by the Procurement Manager.",
-    "returnedNote": "You can correct it and submit it again."
+    "returnedNote": "You can correct it and submit it again.",
+    "refundTitle": "Upload refund invoice",
+    "refundSubtitle": "Attach the refund (credit note) invoice. It is read automatically, goes through the same approvals, and once finally approved it is deducted from your consumption.",
+    "refundBadge": "Refund",
+    "refundOf": "Refund of invoice",
+    "refundOfNone": "Not linked to an invoice",
+    "refundHint": "Choose the approved invoice this refund belongs to. The refund cannot be more than that invoice. Enter the amount as a positive number.",
+    "submitRefund": "Submit refund",
+    "refundPrompt": "Did the vendor refund part or all of this invoice? Upload the refund invoice."
   }
 }

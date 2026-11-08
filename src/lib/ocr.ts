@@ -29,6 +29,7 @@ Extract the following from the invoice and answer with ONE JSON object only, no 
  "total": number|null,             // grand total including VAT, in SAR
  "confidence": "high"|"medium"|"low"
 }
+If the document is a credit note, refund or return invoice, still report every amount as a POSITIVE number.
 Use plain numbers with a dot as decimal separator (convert Arabic-Indic digits). Use null for anything you cannot read; never guess.`;
 
 function toHalalas(v: unknown): number | null {

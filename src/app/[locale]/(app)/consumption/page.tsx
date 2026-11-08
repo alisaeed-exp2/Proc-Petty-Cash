@@ -3,7 +3,7 @@ import { requireCompany } from "@/lib/company";
 import { buildReport, type Filters } from "@/lib/reports";
 import { formatHalalas } from "@/lib/ledger/money";
 import { formatDate } from "@/lib/format";
-import { Card, Empty, Notice, PageHeader, Stat, Table, btnSecondary, td, tdNum, th, thNum } from "@/components/ui";
+import { Badge, Card, Empty, Notice, PageHeader, Stat, Table, btnSecondary, td, tdNum, th, thNum } from "@/components/ui";
 import { ReportFilters, exportHref, pdfHref } from "@/components/report-filters";
 import { FlagBadges } from "@/components/expense-view";
 import { Link } from "@/i18n/navigation";
@@ -28,7 +28,7 @@ export default async function ConsumptionPage({
     { role: user.role, userId: user.id, companyId: company.id },
     { from: filters.from, to: filters.to, agentId: filters.agentId, invoiceTypeId: filters.invoiceTypeId },
     locale,
-    { yes: r("yes"), type: (k) => r(`types.${k}`), status: (k) => x(`status.${k}`) },
+    { yes: r("yes"), kind: (k) => r(`kinds.${k}`), type: (k) => r(`types.${k}`), status: (k) => x(`status.${k}`) },
   );
   const total = data.rows.reduce((n, row) => n + (typeof row.total === "number" ? row.total : 0), 0);
 
@@ -85,6 +85,7 @@ export default async function ConsumptionPage({
                     <Link href={`/consumption/${row.id as string}`} className="font-medium text-ocean underline underline-offset-4">
                       {(row.vendor as string | null) ?? "-"}
                     </Link>
+                    {row.kind === "REFUND" && <div className="mt-0.5"><Badge tone="INFO">{x("refundBadge")}</Badge></div>}
                   </td>
                   <td className={`${td} num`}>{(row.invoiceNo as string | null) ?? "-"}</td>
                   <td className={tdNum}>{typeof row.vat === "number" ? formatHalalas(Math.round(row.vat * 100)) : "-"}</td>

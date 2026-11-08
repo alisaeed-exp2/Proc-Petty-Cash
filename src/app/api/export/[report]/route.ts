@@ -40,6 +40,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ report: 
   const x = await getTranslations({ locale, namespace: "expenses" });
   const data = await buildReport(key, { role: user.role, userId: user.id, companyId: company.id }, filters, locale, {
     yes: r("yes"),
+    kind: (k) => r(`kinds.${k}`),
     type: (k) => r(`types.${k}`),
     status: (k) => x(`status.${k}`),
   });

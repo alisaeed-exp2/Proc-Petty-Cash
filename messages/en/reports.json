@@ -71,7 +71,8 @@
       "status": "Status",
       "submittedAt": "Submitted on",
       "reason": "Rejection reason",
-      "invoiceType": "Invoice type"
+      "invoiceType": "Invoice type",
+      "entryKind": "Entry"
     },
     "downloadExcel": "Excel",
     "downloadPdf": "PDF",
@@ -99,6 +100,10 @@
         "notApproved": "This invoice is not approved any more.",
         "reasonRequired": "Enter a reason (at least 3 characters)."
       }
+    },
+    "kinds": {
+      "EXPENSE": "Expense",
+      "REFUND": "Refund"
     }
   }
 }

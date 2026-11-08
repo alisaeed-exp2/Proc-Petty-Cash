@@ -19,6 +19,7 @@ export async function loadLedger(companyId: string, agentId?: string): Promise<{
     prisma.expense.findMany({
       where: {
         companyId,
+        kind: "EXPENSE", // refunds never count as pending or unresolved spending
         ...(agentId ? { agentId } : {}),
         status: { in: ["SUBMITTED", "CONTROLLER_APPROVED", "REJECTED", "APPROVED"] },
       },

@@ -11,6 +11,7 @@ export type QueueRow = {
   submitted: string;
   agent: string;
   vendor: string;
+  refund: boolean;
   company: string;
   project: string | null;
   total: string;
@@ -105,7 +106,10 @@ export function BulkQueue({
               </td>
               <td className={td}>{r.submitted}</td>
               <td className={td}>{r.agent}</td>
-              <td className={td}>{r.vendor}</td>
+              <td className={td}>
+                {r.vendor}
+                {r.refund && <div className="mt-0.5"><Badge tone="INFO">{x("refundBadge")}</Badge></div>}
+              </td>
               <td className={td}>
                 {r.company}
                 {r.project && <div className="text-xs text-muted">{r.project}</div>}
